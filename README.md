@@ -67,7 +67,6 @@ Run scripts in the following order:
 • G_Render/G_Veiwer.pde
 
 Contingency Analysis Scripts:
-
 Run these Scripts first:
 • StringMaker.pde
 • ShannonAdder.pde
