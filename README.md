@@ -77,7 +77,7 @@ Proximus (run these in order):<br>
 • prepDatForR.pde<br>
 • proximusAnalysis.R<br>
 &emsp; Note(s):<br>
-&emsp;&emsp; • Should be sourced into R.
+&emsp;&emsp; • Should be sourced into R. <br>
 • namAndFilt.pde<br>
 C_Map (these can run in any order, so long as "C_Map_Combined.pde" is last):<br>
 • C_Map.pde<br>
