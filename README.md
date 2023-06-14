@@ -11,14 +11,14 @@ R packages:<br>
 • cba<br>
 • scales<br>
 
-Starting Files:<br>
-Files present for each symbiont (within subfolders):<br>
+Starting Files: \[Will be added prior to publication] <br> 
+Files present for each symbiont (within subfolders of sharedResources):<br>
 • SymCon - Symbiont consensus sequence from alignment.<br>
-&emsp;Names = [symbiont abbreviation]-SymCon.txt<br>
+&emsp;Names = \[symbiont abbreviation]-SymCon.txt<br>
 • PraCon - S. Praecaptivus sequence from alignment. The need to use one from the alignment is because insertions  will throw off the locations of genes in an ungapped version of the sequence.<br>
-&emsp;Names = [symbiont abbreviation]-PraCon.txt<br>
+&emsp;Names = \[symbiont abbreviation]-PraCon.txt<br>
 • AnnTab - Table containing the locations of each gene in a given symbiont.<br>
-&emsp;Names = [symbiont abbreviation]-AnnTab.csv<br>
+&emsp;Names = \[symbiont abbreviation]-AnnTab.csv<br>
 Files with one copy in the main sharedResources folder:<br>
 &emsp;• namelist.csv  - A CSV file containing the patristic distances to S. praecaptivus strain HS1 (column "patDis"), abbreviations (column "abb"), cutoffs for calling a gene as intact* (column "CutOff"), and names (column "name") of each symbiont. Cutoffs are set to zero until R_Read.pde is run. Symbionts should be ordered from lowest to highest patristic distance.<br>
 • namelist.txt  - A list of the abbreviations for each symbiont. Symbionts should be ordered from lowest to highest patristic distance.<br>
