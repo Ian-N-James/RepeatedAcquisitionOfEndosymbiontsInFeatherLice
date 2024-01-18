@@ -1,6 +1,18 @@
+/* Takes the Shannon entropies (Shannon.csv), binary strings (included in the same 
+   file as the Shannon entropies) and Hamming distances (HammingDistance.csv). 
+   Produces a file (PanelA.tif) containing a matrix of functional statuses select 
+   genes encoding respiratory chain components in each louse endosymbiont, the 
+   Shannon entropies corresponding to the binary strings of these genes, the 
+   Hamming distances between the binary strings of these genes and the 
+   relationship strengths.
+*/
 void setup(){
   size(2675,4600);background(255);
   translate(0,25);
+  color intact=color(166,219,160);
+  color nonIntact=color(153,112,171);
+  color direct=color(25.5,84.15,255);
+  color reciprocal=color(229.5,43.35,0);
   Table BinStrings=loadTable("../sharedResources/Shannon.csv","header");
   Table NameList=loadTable("../sharedResources/namelist.csv","header");
   String[] removeNames={"Coang","5_11_15_4"};
@@ -55,13 +67,13 @@ void setup(){
   text(nuo_atp,((nuoPos+atpPos)/2),heiHD);
   text(atp_cyo,((atpPos+cyoPos)/2),heiHD);
   text(cyo_cyd,((cyoPos+cydPos)/2),heiHD);
-  fill(255,0,0);
+  fill(reciprocal);
   text(ndhNuoS,((nuoPos+ndhPos)/2),heiRS);
-  fill(0,0,255);
+  fill(direct);
   text(nuoAtpS,((nuoPos+atpPos)/2),heiRS);
-  fill(0,0,255);
+  fill(direct);
   text(atpCyoS,((atpPos+cyoPos)/2),heiRS);
-  fill(255,0,0);
+  fill(reciprocal);
   text(cyoCydS,((cyoPos+cydPos)/2),heiRS);
   fill(0);
   strokeWeight(5);
@@ -69,16 +81,16 @@ void setup(){
     textFont(name);textAlign(RIGHT,CENTER);
     text(NameList.getString(i,"name"),nameEnd,top+i*mod-20);
     textFont(bin);textAlign(CENTER,CENTER);
-    if(ndh.charAt(i)=='1'){fill(0,255,255);}else{fill(255,0,255);}
+    if(ndh.charAt(i)=='1'){fill(intact);}else{fill(nonIntact);}
     rect(ndhPos-50,top+i*mod-50,100,mod);
     fill(0);
-    if(nuo.charAt(i)=='1'){fill(0,255,255);}else{fill(255,0,255);}
+    if(nuo.charAt(i)=='1'){fill(intact);}else{fill(nonIntact);}
     rect(nuoPos-50,top+i*mod-50,100,mod);
-    if(atp.charAt(i)=='1'){fill(0,255,255);}else{fill(255,0,255);}
+    if(atp.charAt(i)=='1'){fill(intact);}else{fill(nonIntact);}
     rect(atpPos-50,top+i*mod-50,100,mod);
-    if(cyo.charAt(i)=='1'){fill(0,255,255);}else{fill(255,0,255);}
+    if(cyo.charAt(i)=='1'){fill(intact);}else{fill(nonIntact);}
     rect(cyoPos-50,top+i*mod-50,100,mod);
-    if(cyd.charAt(i)=='1'){fill(0,255,255);}else{fill(255,0,255);}
+    if(cyd.charAt(i)=='1'){fill(intact);}else{fill(nonIntact);}
     rect(cydPos-50,top+i*mod-50,100,mod);
     fill(0);
     text(ndh.charAt(i),ndhPos,top+i*mod-20);
