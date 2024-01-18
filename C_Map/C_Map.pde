@@ -1,11 +1,35 @@
-int maxHam=34;
+/* Takes the Shannon entropies (Shannon.csv), Hamming distances (HammingDistance.csv),
+   a file containing instructions on which genes to label (labels.txt), and two color 
+   maps (linear_ternary-blue_0-44_c57_n256.csv and
+   linear_ternary-red_0-50_c52_n256.csv). Produces the Circle map 
+   (out_C_BinaryColMap_NT.tif) displaying the contingent relationships between all 
+   fractionally retained genes. 
+   The color maps used for rendering the relationships are from CET Perceptually 
+   Uniform Colour Maps (https://colorcet.com/index.html) by Peter Kovesi 
+   (See also Good Colour Maps: How to Design Them 2015) and are under a Creative 
+   Commons BY License (https://creativecommons.org/licenses/by/4.0/).
+*/
+int maxHammingDistance=-1;
+float centerHammingValue=-1;
+boolean testColorLoading=false,revCol=false;
+boolean directOnly=false,recipOnly=false;
+String namMod=""; 
+
+
 void setup(){
   size(5000,5000);background(255);
+  String colsNam="BinaryColMap";
+  String colsNamD="linear_ternary-blue_0-44_c57_n256";
+  float[][] colsD=loadColors("colorProfiles/"+colsNamD+".csv",revCol);
+  String colsNamR="linear_ternary-red_0-50_c52_n256";
+  float[][] colsR=loadColors("colorProfiles/"+colsNamR+".csv",revCol);
   
   boolean labelTags=false;
   boolean ex=true;
   int prevW=4500,prevH=4500;
   float hamPoint=127.5,shanPoint=127.5;
+  
+  String num="C";
   float LB=-((prevW*.9)/2);
   float ellipW=prevW/300;
   float ellipH=prevH/300;
@@ -20,12 +44,18 @@ void setup(){
   rotate(PI/2.0);
   Table hamming=loadTable("../sharedResources/HammingDistance.csv","header");
   Table shannon=loadTable("../sharedResources/Shannon.csv","header");
+  // Determine the maximum Hamming distance possible, and the central neutral value for Hamming distance.
+  maxHammingDistance=shannon.getString(0,"noninverted").length();
+  centerHammingValue=maxHammingDistance/2.0; 
+  
+  
+  if(directOnly && recipOnly){directOnly=false;recipOnly=false;}
   println("tablesLoaded "+millis()/1000+" seconds");
-  int ti=shannon.getRowCount();
-  boolean[] aboveShanCut=new boolean[ti];
   int numAbove=0;
   int sCut=3;
   IntDict tagID=new IntDict();
+  int ti=shannon.getRowCount();
+  boolean[] aboveShanCut=new boolean[ti];
   for(int i=0;i<ti;i++){
     if(shanPassFail(shannon.getFloat(i,"Shannon"),sCut)){
       aboveShanCut[i]=true;
@@ -39,54 +69,53 @@ void setup(){
   FloatList[] ShannonEntropies=new FloatList[numAbove];
   IntList[] HammingDistances=new IntList[numAbove];
   String[] tags=new String[numAbove];
+  
   int tj=ti+2;
+  
   int ID;
-  String[] hamTit=hamming.getColumnTitles();
+  String[] HammingTitles=hamming.getColumnTitles();
   for (int i=0;i<numAbove;i++){
     tarNums[i]=new IntList();
     ShannonEntropies[i]=new FloatList();
     HammingDistances[i]=new IntList();
   }
-  Table reorg=new Table();float score1=0,score2=0;;int hamHol;float shanHol;
-  Table reorg2=new Table();
-  reorg.addColumn("id",Table.INT);
+  //Table reorg=new Table();
+  float score=0;
+  int holdHD;float holdSE;
+  Table reorg=new Table();
+  reorg.addColumn("id1",Table.INT);
+  reorg.addColumn("id2",Table.INT);
+  reorg.addColumn("typeR",Table.INT);
   reorg.addColumn("score",Table.FLOAT);
-  reorg2.addColumn("id1",Table.INT);
-  reorg2.addColumn("id2",Table.INT);
-  reorg2.addColumn("typeR",Table.INT);
-  reorg2.addColumn("score",Table.FLOAT);
   int n=0;
   for (int i=0;i<ti;i++){
     if (tagID.hasKey(hamming.getString(i,0))){
       ID=tagID.get(hamming.getString(i,0));
       tags[ID]=hamming.getString(i,0);
-      reorg.addRow();reorg.setInt(ID,0,ID);score1=0;
       for (int j=2;j<tj;j++){
-        if (abs(17-hamming.getInt(i,j))>hCut            //DO require relation to pass Hamming cutoff
-          &&tagID.hasKey(hamTit[j])                     //DO require target to pass Shannon cutoff
-        && !tarNums[tagID.get(hamTit[j])].hasValue(ID)  //do NOT add relations that already exist
-        && !hamming.getString(i,0).equals(hamTit[j])    //do NOT add self relations
+        if (abs(centerHammingValue-hamming.getInt(i,j))>hCut   //DO require relation to pass Hamming cutoff
+          &&tagID.hasKey(HammingTitles[j])                     //DO require target to pass Shannon cutoff
+        && !tarNums[tagID.get(HammingTitles[j])].hasValue(ID)  //do NOT add relations that already exist
+        && !hamming.getString(i,0).equals(HammingTitles[j])    //do NOT add self relations
         ){
-          reorg2.addRow();
-          reorg2.setInt(n,"id1",ID);
-          reorg2.setInt(n,"id2",tagID.get(hamTit[j]));
-          score2=0;
-          tarNums[ID].append(tagID.get(hamTit[j]));
-          shanHol=float(nfc(shannon.getFloat(i,"Shannon"),4))*float(nfc(shannon.getFloat(j-2,"Shannon"),4));
-          if(ex){shanHol=min(float(nfc(shannon.getFloat(i,"Shannon"),4)),float(nfc(shannon.getFloat(j-2,"Shannon"),4)));}
-          ShannonEntropies[ID].append(shanHol);
-          hamHol=hamming.getInt(i,j);
-          HammingDistances[ID].append(hamHol);
-          if(hamHol<17){reorg2.setInt(n,"typeR",0);}  
-          if(hamHol>17){reorg2.setInt(n,"typeR",1);}
-          if(hamHol==17){reorg2.setInt(n,"typeR",2);}
-          score2=scaleHam(sqrt(sq(hamHol-17)),hamPoint)+scaleShan(shanHol,shanPoint);
-          score1+=score2;
-          reorg2.setFloat(n,"score",score2);
+          reorg.addRow();
+          reorg.setInt(n,"id1",ID);
+          reorg.setInt(n,"id2",tagID.get(HammingTitles[j]));
+          score=0;
+          tarNums[ID].append(tagID.get(HammingTitles[j]));
+          holdSE=float(nfc(shannon.getFloat(i,"Shannon"),4))*float(nfc(shannon.getFloat(j-2,"Shannon"),4));
+          if(ex){holdSE=min(float(nfc(shannon.getFloat(i,"Shannon"),4)),float(nfc(shannon.getFloat(j-2,"Shannon"),4)));}
+          ShannonEntropies[ID].append(holdSE);
+          holdHD=hamming.getInt(i,j);
+          HammingDistances[ID].append(holdHD);
+          if(holdHD<centerHammingValue){reorg.setInt(n,"typeR",0);}  
+          if(holdHD>centerHammingValue){reorg.setInt(n,"typeR",1);}
+          if(holdHD==centerHammingValue){reorg.setInt(n,"typeR",2);}
+          score=scaleHam(sqrt(sq(holdHD-centerHammingValue)),hamPoint)+scaleShan(holdSE,shanPoint);
+          reorg.setFloat(n,"score",score);
           n++;
         }
       }
-      reorg.setFloat(ID,"score",score1);
     }
   }
   println("Hammings Read "+millis()/1000+" seconds");
@@ -94,10 +123,11 @@ void setup(){
   float[] corX=new float[ti];
   float[] corY=new float[ti];
   float tranFac=25;
-  String[] labels=loadStrings("labels.txt");
+  String[] labels=loadStrings("labels"+namMod+".txt");
   float oti=1.0/float(ti),iota=0,sigh=0,cosigh=0;
   int tl=labels.length;String[] taghold,colHold;
-  float RST=0,pls=0;//Ring Seg Thickness
+  float RST=0;//Ring Segment Thickness
+  float pls=0;
   float mod=0;
   textFont(nam);
   for(int l=0;l<tl;l+=3){
@@ -108,7 +138,7 @@ void setup(){
     stroke(float(colHold[1].split(",")[0]),float(colHold[1].split(",")[1]),float(colHold[0].split(",")[2]),float(colHold[1].split(",")[3]));
     ringSeg(0,0,LB,LB,LB-RST-mod,LB-RST-mod,(float(tagID.get(taghold[0]))*oti)*TWO_PI,(float(tagID.get(taghold[1]))*oti)*TWO_PI);
     fill(float(colHold[0].split(",")[0])/3,float(colHold[0].split(",")[1])/3,float(colHold[0].split(",")[2])/3,255);
-    Float mid=(float(tagID.get(taghold[0]))+float(tagID.get(taghold[1])))/2;
+    float mid=(float(tagID.get(taghold[0]))+float(tagID.get(taghold[1])))/2;
     if(mid/ti>=0.0/8.0 && mid/ti<1.0/8.0){println(labels[l]+" in 1");textAlign(CENTER,BOTTOM);}  // in  
     if(mid/ti>=1.0/8.0 && mid/ti<2.0/8.0){println(labels[l]+" in 2");textAlign(LEFT,CENTER);}  // in 
     if(mid/ti>=2.0/8.0 && mid/ti<3.0/8.0){println(labels[l]+" in 3");textAlign(LEFT,CENTER);}   // in 
@@ -187,40 +217,86 @@ void setup(){
     }
   }
   println("coordinates generated "+millis()/1000+" seconds");
-  reorg2.sort("score");
-  int[] n1=reorg2.getIntColumn("id1");
-  int[] n2=reorg2.getIntColumn("id2");
-  int[] Rtype=reorg2.getIntColumn("typeR");
-  float[] scores=reorg2.getFloatColumn("score");
+  reorg.sort("score");
+  int[] n1=reorg.getIntColumn("id1");
+  int[] n2=reorg.getIntColumn("id2");
+  int[] Rtype=reorg.getIntColumn("typeR");
+  float[] scores=reorg.getFloatColumn("score");
   fill(0,0);
   float x1,x2,x3,y1,y2,y3;
   strokeWeight(2);
   ti=n1.length;
-  for(int i=0;i<ti;i++){    
-    if(Rtype[i]==0){
-      stroke(0,0,scores[i],scores[i]);
-      x1=corX[n1[i]];
-      y1=corY[n1[i]];
-      x2=corX[n2[i]];
-      y2=corY[n2[i]];
-      x3=(x1+x2+0)/3;
-      y3=(y1+y2+0)/3;
-      bezier(x1,y1,x3,y3,x3,y3,x2,y2);
+  int c,f;float t,m;
+  
+  
+  if(directOnly){
+    for(int i=0;i<ti;i++){
+      if(Rtype[i]==0){
+        t=scores[i];
+        c=ceil(t);f=floor(t);m=t%1;
+        stroke(lerp(colsD[0][f],colsD[0][c],m),lerp(colsD[1][f],colsD[1][c],m),lerp(colsD[2][f],colsD[2][c],m),scores[i]);
+        x1=corX[n1[i]];
+        y1=corY[n1[i]];
+        x2=corX[n2[i]];
+        y2=corY[n2[i]];
+        x3=(x1+x2+0)/3;
+        y3=(y1+y2+0)/3;
+        bezier(x1,y1,x3,y3,x3,y3,x2,y2);
+      }
     }
-    if(Rtype[i]==1){
-      stroke(scores[i],0,0,scores[i]);
-      x1=corX[n1[i]];
-      y1=corY[n1[i]];
-      x2=corX[n2[i]];
-      y2=corY[n2[i]];
-      x3=(x1+x2+0)/3;
-      y3=(y1+y2+0)/3;
-      bezier(x1,y1,x3,y3,x3,y3,x2,y2);
+  }else{
+    if(recipOnly){
+      for(int i=0;i<ti;i++){
+        if(Rtype[i]==1){
+          t=scores[i];
+          c=ceil(t);f=floor(t);m=t%1;
+          stroke(lerp(colsR[0][f],colsR[0][c],m),lerp(colsR[1][f],colsR[1][c],m),lerp(colsR[2][f],colsR[2][c],m),scores[i]);
+          x1=corX[n1[i]];
+          y1=corY[n1[i]];
+          x2=corX[n2[i]];
+          y2=corY[n2[i]];
+          x3=(x1+x2+0)/3;
+          y3=(y1+y2+0)/3;
+          bezier(x1,y1,x3,y3,x3,y3,x2,y2);
+        }
+      }
+    }else{
+      for(int i=0;i<ti;i++){
+        if(Rtype[i]==0){
+          t=scores[i];
+          c=ceil(t);f=floor(t);m=t%1;
+          stroke(lerp(colsD[0][f],colsD[0][c],m),lerp(colsD[1][f],colsD[1][c],m),lerp(colsD[2][f],colsD[2][c],m),scores[i]);
+          x1=corX[n1[i]];
+          y1=corY[n1[i]];
+          x2=corX[n2[i]];
+          y2=corY[n2[i]];
+          x3=(x1+x2+0)/3;
+          y3=(y1+y2+0)/3;
+          bezier(x1,y1,x3,y3,x3,y3,x2,y2);
+        }
+        if(Rtype[i]==1){
+          t=scores[i];
+          c=ceil(t);f=floor(t);m=t%1;
+          stroke(lerp(colsR[0][f],colsR[0][c],m),lerp(colsR[1][f],colsR[1][c],m),lerp(colsR[2][f],colsR[2][c],m),scores[i]);
+          x1=corX[n1[i]];
+          y1=corY[n1[i]];
+          x2=corX[n2[i]];
+          y2=corY[n2[i]];
+          x3=(x1+x2+0)/3;
+          y3=(y1+y2+0)/3;
+          bezier(x1,y1,x3,y3,x3,y3,x2,y2);
+        }
+      }
     }
   }
+  if(revCol){colsNam+="_R";}
+  namMod+="_"+num+"_"+colsNam;
+  if(directOnly){namMod+="_directOnly";}
+  if(recipOnly){namMod+="_reciprocalOnly";}
   println("plotted,Time elapsed: "+millis()/1000+" seconds");
-  if(labelTags){save("CirclePlot_Tags.png");}else{save("CirclePlot_NT.png");}
-  if(labelTags){save("CirclePlot_Tags.tif");}else{save("CirclePlot_NT.tif");}
+  println("testout4"+namMod+"_Tags.png");
+  if(labelTags){save("outputs/out"+namMod+"_Tags.png");}else{save("outputs/out"+namMod+"_NT.png");}
+  if(labelTags){save("outputs/out"+namMod+"_Tags.tif");}else{save("outputs/out"+namMod+"_NT.tif");}
   exit();
 }
 
@@ -236,10 +312,10 @@ boolean shanPassFail(float shan,int cutOff){
   return false;
 }
 float scaleHam(int ham,float points){
-  return map(ham,0,17,0,points);
+  return map(ham,0,centerHammingValue,0,points);
 }
 float scaleHam(float ham,float points){
-  return map(ham,0,17,0,points);
+  return map(ham,0,centerHammingValue,0,points);
 }
 float scaleShan(float shan,float points){
   return map(shan,0,1,0,points);
@@ -301,7 +377,6 @@ class sections{
 void ringSeg(float xPos,float yPos,float inW,float inH,float outW,float outH,float startAngle,float stopAngle){
   startAngle-=0.004;stopAngle+=0.004;
   strokeJoin(ROUND);
-  //float midAngle=lerp(startAngle,stopAngle,0.5);
   curveTightness(0);
   beginShape();
   curveVertex(inW*cos(startAngle)+xPos,inH*sin(startAngle)+yPos);
@@ -312,13 +387,11 @@ void ringSeg(float xPos,float yPos,float inW,float inH,float outW,float outH,flo
   curveTightness(1);
   curveVertex(inW*cos(stopAngle)+xPos,inH*sin(stopAngle)+yPos);
   curveVertex(lerp(inW,outW,0.5)*cos(stopAngle)+xPos,lerp(inW,outW,0.5)*sin(stopAngle)+yPos);
-  
   curveVertex(outW*cos(stopAngle)+xPos,outH*sin(stopAngle)+yPos);
   curveTightness(1);
   curveVertex(outW*cos(stopAngle)+xPos,outH*sin(stopAngle)+yPos);
   
   for(float i=stopAngle-.05;i>startAngle;i-=0.05){
-  
     curveVertex(outW*cos(i)+xPos,outH*sin(i)+yPos);
     curveTightness(0);
   }curveTightness(1);
