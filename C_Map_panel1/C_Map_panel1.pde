@@ -1,10 +1,10 @@
 /* Takes the Shannon entropies (Shannon.csv), binary strings (included in the same 
-   file as the Shannon entropies) and Hamming distances (HammingDistance.csv). 
-   Produces a file (PanelA.tif) containing a matrix of functional statuses select 
-   genes encoding respiratory chain components in each louse endosymbiont, the 
-   Shannon entropies corresponding to the binary strings of these genes, the 
-   Hamming distances between the binary strings of these genes and the 
-   relationship strengths.
+   file as the Shannon entropies) and Hamming distances (HammingDistance.csv).  
+   Produces a file (PanelA.tif) depicting a matrix of selected genes, color coded 
+   in accordance with predicted functional status. This particular script focuses 
+   on genes encoding respiratory chain components, but could be modified to focus 
+   on other targets. Also displays Hamming distances, Shannon entropies, and 
+   estimates of relationship strength between binary strings.
 */
 void setup(){
   size(2675,4600);background(255);
