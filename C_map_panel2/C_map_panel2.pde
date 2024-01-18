@@ -1,5 +1,6 @@
-/* Takes the Shannon entropies (Shannon.csv). Produces a plot of the frequencies 
-   of strings with different Shannon entropies.
+/* Takes the Shannon entropies (Shannon.csv). Produces a plot (PanelB.tif) 
+   depicting the frequencies of strings in accordance with string (Shannon) 
+   entropy.
 */
 void setup(){
   size(2675,1550);
