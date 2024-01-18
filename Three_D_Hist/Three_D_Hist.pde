@@ -1,13 +1,20 @@
+/* Takes annotation tables (ZFin-*-AnnTabFin.csv) that have been processed by 
+   LAnner_7_Predictor, and a color map (Gradient.txt). Produces a three 
+   dimensional histogram of the number of genes with given snLEDs in 
+   accordance with patristic distance from S. praecaptivus, with the symbiont 
+   having the lowest patristic distance in the back. Predicted intact genes 
+   are plotted in green, and predicted pseudogenes are plotted in purple. 
+*/
 float maxpd,minpd;
-IntList exclude=new IntList(0,122,262,263,264,265,266,267,301,302,303,304,344,470,471,472,473,474,475,476,484,523,717,718,728,729,730,773,797,798,802,803,804,805,811,870,871,877,888,927,928,929,930,971,1078,1113,1154,1156,1230,1259,1260,1261,1262,1264,1265,1283,1285,1286,1390,1598,1630,1632,1661,1711,1825,1973,1974,2047,2048,2139,2173,2174,2333,2409,2432,2447,2448,2514,2515,2516,2518,2519,2555,2556,2557,2567,2577,2580,2595,2755,2756,2795,2796,2797,2798,2799,2800,2801,2802,2804,2805,2806,2861,2866,2890,2891,2906,2915,2936,2947,2966,3130,3131,3141,3156,3165,3166,3167,3168,3169,3207,3220,3221,3222,3223,3436,3437,3438,3456,3457,3517,3526,3538,3557,3558,3629,3641,3782,3794,3806,3807,3808,3809,3816,3817,3902,3903,3904,3905,3906,3931,3932,3933,3934,3940,3941,3942,3943,3944,3945,3946,4102,4103,4192,4288,4318,4323,4326,4328,4329,4337,4354,4364,4367,4426);
+IntList exclude=new IntList(0,122,262,263,264,265,266,267,301,302,303,304,344,470,471,472,473,474,475,476,484,523,717,718,728,729,730,773,797,798,802,803,804,805,811,870,871,877,888,927,928,929,930,971,1078,1113,1154,1156,1230,1259,1260,1261,1262,1264,1265,1283,1285,1286,1390,1598,1630,1632,1661,1711,1825,1973,1974,2047,2048,2139,2173,2174,2333,2409,2432,2447,2448,2514,2515,2516,2518,2519,2555,2556,2557,2567,2577,2580,2595,2755,2756,2795,2796,2797,2798,2799,2800,2801,2802,2804,2805,2806,2861,2866,2890,2891,2906,2915,2936,2947,2966,3130,3131,3141,3156,3165,3166,3167,3168,3169,3207,3220,3221,3222,3223,3436,3437,3438,3456,3457,3517,3526,3538,3557,3558,3629,3641,3782,3794,3806,3807,3808,3809,3816,3817,3902,3903,3904,3905,3906,3931,3932,3933,3934,3940,3941,3942,3943,3944,3945,3946,4102,4103,4192,4288,4318,4323,4326,4328,4329,4337,4354,4364,4367,4426,4088,4089,4090,4091);
 color sideCol=color(64,238);
 color topCol=color(128,238);
 void setup(){
   size(2125,1675);
   background(255);
   smooth(8);
+  color[][] gradients=loadColorsHex("gradient.txt");
   PFont txt=createFont("ArialMT",48);
-  PFont bld=createFont("Arial-BoldMT",48);
   Table namelist=loadTable("../sharedResources/namelist.csv","header");
   float[] pd=namelist.getFloatColumn("patDis");
   int syms=pd.length;
@@ -90,14 +97,14 @@ void setup(){
   line(maxXpoZ+adjX,maxYpoZ+adjY,maxXprZ+adjX,maxYprZ+adjY);
   line(maxXprZ+adjX,maxYprZ+adjY,maxXprZ+adjX+10*1.25,maxYprZ+adjY-40*1.25);
   line(maxXprZ+adjX,maxYprZ+adjY,maxXprZ+adjX+40*1.25,maxYprZ+adjY-10*1.25);
-  stroke(psF(minpd));
+  stroke(153,112,171);
   int psdYmod=110;
   line(maxXpoZ-400,maxYpoZ-2*dvlnScl+10+psdYmod,minXpoZ+50,maxYpoZ-2*dvlnScl+10+psdYmod);
   line(minXpoZ+50,maxYpoZ-2*dvlnScl+10+psdYmod,minXpoZ+50+25*1.25,maxYpoZ-2*dvlnScl+10-15*1.25+psdYmod);
   line(minXpoZ+50,maxYpoZ-2*dvlnScl+10+psdYmod,minXpoZ+50+25*1.25,maxYpoZ-2*dvlnScl+10+15*1.25+psdYmod);
   textAlign(CENTER,BOTTOM);
   text("Pseudogene Degradation",25+(maxXpoZ-400+minXpoZ+50)/2,maxYpoZ-2*dvlnScl+psdYmod);
-  stroke(inF(minpd));
+  stroke(166,219,160);
   line(maxXpoZ-300,maxYpoZ-645,maxXpoZ-100,maxYpoZ-445);
   line(maxXpoZ-100,maxYpoZ-445,maxXpoZ-100-10,maxYpoZ-445-35);
   line(maxXpoZ-100,maxYpoZ-445,maxXpoZ-100-35,maxYpoZ-445-10);
@@ -115,9 +122,9 @@ void setup(){
     for(int j=0;j<100;j++){
       if(counts[i][j]>0){
         if((j+1)*0.01<cutoff[i]){
-          bar(maxXprZ-(j+1)*barWid+xMod,maxYprZ-yMod,10,-4*counts[i][j],inF(pd[i]),inS(pd[i]));
+          bar(maxXprZ-(j+1)*barWid+xMod,maxYprZ-yMod,10,-4*counts[i][j],gradients[2][i],gradients[1][i]);
         }else{
-          bar(maxXprZ-(j+1)*barWid+xMod,maxYprZ-yMod,10,-4*counts[i][j],psF(pd[i]),psS(pd[i]));
+          bar(maxXprZ-(j+1)*barWid+xMod,maxYprZ-yMod,10,-4*counts[i][j],gradients[0][i],gradients[3][i]);
         }
       }
     }
@@ -128,18 +135,6 @@ void setup(){
 }
 void draw(){}
 
-color inF(float in){
-  return color(0,200+map(in,minpd,maxpd,0,55),200+map(in,minpd,maxpd,55,0),238);
-}
-color inS(float in){
-  return color(0,150+map(in,minpd,maxpd,4,28),150+map(in,minpd,maxpd,28,4),238);
-}
-color psF(float in){
-  return color(200+map(in,minpd,maxpd,4,55),0,200+map(in,minpd,maxpd,55,4),238);
-}
-color psS(float in){
-  return color(150+map(in,minpd,maxpd,4,28),0,150+map(in,minpd,maxpd,28,4),238);
-}
 void bar(float staX,float staY,float staW,float staH,color inColF,color inColS){
   color s=getGraphics().strokeColor;float w=getGraphics().strokeWeight;
   stroke(inColS);strokeWeight(0.1);
