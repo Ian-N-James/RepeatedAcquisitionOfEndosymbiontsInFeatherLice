@@ -1,13 +1,16 @@
-/* Takes the Shannon entropies (Shannon.csv), Hamming distances (HammingDistance.csv),
-   a file containing instructions on which genes to label (labels.txt), and two color 
-   maps (linear_ternary-blue_0-44_c57_n256.csv and
-   linear_ternary-red_0-50_c52_n256.csv). Produces the Circle map 
-   (out_C_BinaryColMap_NT.tif) displaying the contingent relationships between all 
-   fractionally retained genes. 
-   The color maps used for rendering the relationships are from CET Perceptually 
-   Uniform Colour Maps (https://colorcet.com/index.html) by Peter Kovesi 
-   (See also Good Colour Maps: How to Design Them 2015) and are under a Creative 
-   Commons BY License (https://creativecommons.org/licenses/by/4.0/).
+/* C_Map - Takes the Shannon entropies (Shannon.csv), Hamming distances 
+   (HammingDistance.csv), a file containing labeling instructions 
+   (labels.txt), and two color maps° (linear_ternary-blue_0-44_c57_n256.csv 
+   and linear_ternary-red_0-50_c52_n256.csv). Renders a circular figure 
+   (out_C_BinaryColMap_NT.tif) with bezier curves depicting the strength of
+   contingent relationships between all genes in the dataset. To improve 
+   clarity in visualization, genes whose binary strings have Shannon 
+   entropies less than 0.3228 are excluded.
+   °Color maps used for rendering the relationships are from CET 
+   Perceptually Uniform Colour Maps (https://colorcet.com/index.html) 
+   by Peter Kovesi (See also Good Colour Maps: How to Design Them 2015) and 
+   are under a Creative Commons BY License 
+   (https://creativecommons.org/licenses/by/4.0/).
 */
 int maxHammingDistance=-1;
 float centerHammingValue=-1;
