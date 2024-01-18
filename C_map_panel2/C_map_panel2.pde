@@ -1,3 +1,6 @@
+/* Takes the Shannon entropies (Shannon.csv). Produces a plot of the frequencies 
+   of strings with different Shannon entropies.
+*/
 void setup(){
   size(2675,1550);
   background(255);
