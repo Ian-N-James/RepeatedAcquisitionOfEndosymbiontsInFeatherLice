@@ -1,9 +1,8 @@
-/* Takes annotation tables (ZFin-*-AnnTabFin.csv) that have been processed by 
-   LAnner_7_Predictor, and a color map (Gradient.txt). Produces a three 
-   dimensional histogram of the number of genes with given snLEDs in 
-   accordance with patristic distance from S. praecaptivus, with the symbiont 
-   having the lowest patristic distance in the back. Predicted intact genes 
-   are plotted in green, and predicted pseudogenes are plotted in purple. 
+/* Takes annotation tables (ZFin-*-AnnTabFin.csv) output by LAnner_7_Predictor, 
+   and a color map (Gradient.txt). Produces a three dimensional histogram 
+   showing the numbers of genes in accordance with snLED values. Histogram bars 
+   are colored in accordance with the predicted functional status of genes 
+   (green = intact, purple = non-intact) derived from the E-M analysis.
 */
 float maxpd,minpd;
 IntList exclude=new IntList(0,122,262,263,264,265,266,267,301,302,303,304,344,470,471,472,473,474,475,476,484,523,717,718,728,729,730,773,797,798,802,803,804,805,811,870,871,877,888,927,928,929,930,971,1078,1113,1154,1156,1230,1259,1260,1261,1262,1264,1265,1283,1285,1286,1390,1598,1630,1632,1661,1711,1825,1973,1974,2047,2048,2139,2173,2174,2333,2409,2432,2447,2448,2514,2515,2516,2518,2519,2555,2556,2557,2567,2577,2580,2595,2755,2756,2795,2796,2797,2798,2799,2800,2801,2802,2804,2805,2806,2861,2866,2890,2891,2906,2915,2936,2947,2966,3130,3131,3141,3156,3165,3166,3167,3168,3169,3207,3220,3221,3222,3223,3436,3437,3438,3456,3457,3517,3526,3538,3557,3558,3629,3641,3782,3794,3806,3807,3808,3809,3816,3817,3902,3903,3904,3905,3906,3931,3932,3933,3934,3940,3941,3942,3943,3944,3945,3946,4102,4103,4192,4288,4318,4323,4326,4328,4329,4337,4354,4364,4367,4426,4088,4089,4090,4091);
