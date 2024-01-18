@@ -1,4 +1,8 @@
-
+/* Takes specialized output files from G_Render saved within its sketch directory 
+   (tab.tif and geneRender.tif) and a table of gene annotations (Tags.csv). 
+   Serves as an interactive data visualization tool that facilitates manual 
+   inspection of the whole dataset and includes scrolling and selection functions.
+*/
 int botX=0; int botY=0; String Id="";int gene=0;String name1="[No Gene Selected]";String name2="[No Gene Selected]";Table Ann;
 int tabWidth=0;
 String Func1="[No Gene Selected]";String Func2="[No Gene Selected]";
