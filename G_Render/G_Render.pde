@@ -1,3 +1,16 @@
+/* Takes the annotation tables (ZFin-*-AnnTabFin.csv) that have been processed 
+   by LAnner_7_Predictor and a color map (Gradient.txt). Renders several 
+   outputs that show gene status (with intact genes in green, pseudo genes in 
+   purple and missing genes in black) across symbiont genomes. One output, 
+   saved within the directory of G_Veiwer, has the Tab containing gene names 
+   saved as a separate file (tab.tif) from the gene statuses (geneRender.tif). 
+   The other outputs are saved within the sketch directory. Two use sub-pixel 
+   rendering (GRender.tif and GRender_2.tif) and differ by the amount of 
+   whitespace to the right and top of the image. The final output 
+   (GRender_1px.tif) does not use sub-pixel rendering, instead rendering at 
+   one pixel per gene.
+*/
+
 PGraphics tab,ren1,ren1_2,ren2,ren4,tab2;
   int startX=100;     // the initial X start position of the genomes
   int startY=105;     // the initial Y start position of the genomes
@@ -17,13 +30,15 @@ void setup(){
   PFont GenomeNamesFont = createFont("Arial-ItalicMT", 12),sup=createFont("ArialMT",
   GenomeNamesFont.getSize()/2), LabelsFont =createFont("ArialMT", GenomeNamesFont.getSize()),SWAFont=createFont("ArialMT", GenomeNamesFont.getSize());
   PFont GenomeNamesFont2 = createFont("Arial-ItalicMT", 16),sup2=createFont("ArialMT",GenomeNamesFont2.getSize()/2), LabelsFont2 =createFont("ArialMT", GenomeNamesFont2.getSize()),SWAFont2=createFont("ArialMT", GenomeNamesFont2.getSize());
-color intact=color(0,255,255);
-  color pseudo=color(200,0,200);
+  color intact=color(166,219,160);//for 
+  color pseudo=color(153,112,171);//
   color MC=color(100,100,100);
-  color CF=color(255,255,0);
-  //intact=color(0,255,255);
-  //pseudo=color(0,150,150);
-  float x;
+  color CF=color(255,255,0);// this color should not appear.
+  color[][] gradients=loadColorsHex("Gradient.txt");
+  // gradients[0] is the pseudogene gradient
+  // gradients[1] is the intact gene gradient
+  color riboRegion=color(53,151,143);
+  color phagePlasRegions=color(223,194,125);
   int[][] findCom=new int[geneNum][3];
   
   
@@ -122,7 +137,7 @@ color intact=color(0,255,255);
   //ribosomal protiens: sant_0425 (rpsJ) - Sant_0452 (rplQ) (0,55,255,55)
   String[] regionStartTags={"Sant_2513","Sant_2857","Sant_P0001","Sant_0425"};
   String[] regionStopTags={"Sant_2554","Sant_2946","Sant_P0364","Sant_0452"};
-  color[]  regionColors={color(155,55,255,55),color(155,55,255,55),color(155,55,255,55),color(0,55,255,55)}; 
+  color[]  regionColors={phagePlasRegions,phagePlasRegions,phagePlasRegions,riboRegion}; 
   String[] regionNames={"Prophage Island 1","Prophage Island 2","Plasmid","Ribosomal Proteins"};
   int tk=regionStartTags.length;
   for(int k=0;k<tk;k++){
@@ -144,9 +159,13 @@ color intact=color(0,255,255);
   ren1_2e=createGraphics(ren1_2.width,ren1_2.height);ren1_2e.beginDraw();
   tab.textAlign(RIGHT);
   tab2.textAlign(RIGHT,CENTER);
+  float x,m;
+  int f,c;
+  color useCol;
   for(int i=0;i<ti;i++){
     ren1.strokeWeight(.65);ren4.strokeWeight(.65);ren1_2.strokeWeight(.65);
     if(GenomeNames[i].split("@").length==1){
+      tab.textFont(GenomeNamesFont);
       tab.text(GenomeNames[i],tab.width-5,startY+10);
       tab2.pushMatrix();
       tab2.translate(tab2.width-5,startY2+Height/2);
@@ -184,22 +203,29 @@ color intact=color(0,255,255);
           findCom[j][1]++;
         break;
         case 1:
-          x=(1-pow(geneWScore[i][j],2))*200+50;
-          ren4.fill(x,0,x);ren4.stroke(x,0,x);
-          ren1p.fill(x,0,x);ren1p.stroke(x,0,x);
-          ren1_2p.fill(x,0,x);ren1_2p.stroke(x,0,x);
-          ren2.fill(x,0,x);
+          x=map(geneWScore[i][j],Cutoffs[i],1,gradients[0].length-1,0);
+          f=floor(x);c=ceil(x);
+          m=x%1;
+          useCol=lerpColor(gradients[0][f],gradients[0][c],m);
+          ren4.fill(useCol);ren4.stroke(useCol);
+          ren1p.fill(useCol);ren1p.stroke(useCol);
+          ren1_2p.fill(useCol);ren1_2p.stroke(useCol);
+          ren2.fill(useCol);
           ren1p.rect((j*mult),startY,mult-mult/4,Height);
           ren1_2p.rect((j*mult),startY2,mult-mult/4,Height2);
           findCom[j][1]++;
           findCom[j][2]++;
         break;
         case 2: 
-          x=150*-(geneWScore[i][j]/Cutoffs[i])+255;
-          ren4.fill(0,x,x);ren4.stroke(0,x,x);
-          ren1i.fill(0,x,x);ren1i.stroke(0,x,x);
-          ren1_2i.fill(0,x,x);ren1_2i.stroke(0,x,x);
-          ren2.fill(0,x,x);
+          x=map(geneWScore[i][j],0,Cutoffs[i],gradients[1].length-1,0);
+          f=floor(x);c=ceil(x);
+          m=x%1;
+          useCol=lerpColor(gradients[1][f],gradients[1][c],m);
+          
+          ren4.fill(useCol);ren4.stroke(useCol);
+          ren1i.fill(useCol);ren1i.stroke(useCol);
+          ren1_2i.fill(useCol);ren1_2i.stroke(useCol);
+          ren2.fill(useCol);
           ren1i.rect((j*mult),startY,mult-mult/4,Height);
           ren1_2i.rect((j*mult),startY2,mult-mult/4,Height2);
           findCom[j][0]++;
