@@ -4,28 +4,33 @@
   exampleFiles in this repository) that is gapped in accordance with the 
   alignment. The script then outputs a sequence file encoded to display the 
   contents of both input files (file name = *-ComCon.txt) in accordance with 
-  the key located main directory of the GitHub repo named "ComConKey.svg". 
+  the key located in the main directory of the GitHub repo named "ComConKey.svg". 
 */
 
+// Load query organism abbreviations.
 String[] namelist=loadTable("../sharedResources/namelist.csv","header").getStringColumn("abb"); 
 int ti=namelist.length;
 for(int i=0;i<ti;i++){
-  String symCon=loadStrings("../sharedResources/SymCon/"+namelist[i]+"-SymCon.txt")[0];
-  String praCon=loadStrings("../sharedResources/PraCon/"+namelist[i]+"-PraCon.txt")[0];
+  // Load SymCon and PraCon.
+  String SymCon=loadStrings("../sharedResources/SymCon/"+namelist[i]+"-SymCon.txt")[0];
+  String PraCon=loadStrings("../sharedResources/PraCon/"+namelist[i]+"-PraCon.txt")[0];
   
   /* If the documents have been exported correctly, and came from the same file,
      then they will always be the same length. If the documents are not the 
      same length, then this indicates that something is wrong and that the 
      process should not proceed.
   */ 
-  if(praCon.length()==symCon.length()){
-    int tj=symCon.length();
+  if(PraCon.length()==SymCon.length()){
+    int tj=SymCon.length();
     boolean same=true;
+    // Output file (*-ComCon.txt) path/name is set here.
     PrintWriter ComCon=createWriter("../sharedResources/ComCon/"+namelist[i]+"-ComCon.txt");
+    
+    // Encode the ComCon sequence.
     for(int j=0;j<tj;j++){
-      switch(praCon.charAt(j)){
+      switch(PraCon.charAt(j)){
         case'A':
-          switch(symCon.charAt(j)){
+          switch(SymCon.charAt(j)){
             case'A': ComCon.print("A"); break;
             case'T': ComCon.print("."); same=false;break;
             case'G': ComCon.print("}"); same=false;break;
@@ -45,7 +50,7 @@ for(int i=0;i<ti;i++){
           }
         break;
         case'T':
-        switch(symCon.charAt(j)){
+        switch(SymCon.charAt(j)){
             case'A': ComCon.print("e"); same=false;break;
             case'T': ComCon.print("T"); break;
             case'G': ComCon.print("\\");same=false;break;
@@ -65,7 +70,7 @@ for(int i=0;i<ti;i++){
           }
         break;
         case'G':
-        switch(symCon.charAt(j)){
+        switch(SymCon.charAt(j)){
             case'A': ComCon.print("|"); same=false;break;
             case'T': ComCon.print("'"); same=false;break;
             case'G': ComCon.print("G"); break;
@@ -85,7 +90,7 @@ for(int i=0;i<ti;i++){
           }
         break;
         case'C':
-        switch(symCon.charAt(j)){
+        switch(SymCon.charAt(j)){
             case'A': ComCon.print("\""); same=false;break;
             case'T': ComCon.print("?"); same=false;break;
             case'G': ComCon.print("*"); same=false;break;
@@ -105,7 +110,7 @@ for(int i=0;i<ti;i++){
           }
         break;
         case'-':
-        switch(symCon.charAt(j)){
+        switch(SymCon.charAt(j)){
             case'A': ComCon.print("@"); same=false;break;
             case'T': ComCon.print("+"); same=false;break;
             case'G': ComCon.print("{"); same=false;break;
@@ -126,6 +131,8 @@ for(int i=0;i<ti;i++){
         break;
       }
     }
+    
+    // Save the ComCon file.
     ComCon.flush();
     ComCon.close();
     // It is unlikely that the two consensus sequences for anything but 
