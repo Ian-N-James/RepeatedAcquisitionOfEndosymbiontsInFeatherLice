@@ -4,8 +4,11 @@
    subset of samples. The output of this script is utilized in both the 
    Hamming distance and Proximus-based approaches. 
 */
+
+// Load query organism abbreviations.
 String[] namelist=loadStrings("../sharedResources/namelist2.txt");
 Table AnnTab;
+// Load the first annotation table.
 AnnTab=loadTable("../sharedResources/zFin/zFin-"+namelist[0]+"-AnnTabFin.csv","header");
 int tj=AnnTab.getRowCount();
 String[] Tag=new String[tj];
@@ -27,7 +30,9 @@ for(int j=0;j<tj;j++){
 }
 int ti=namelist.length;
 for(int i=1;i<ti;i++){
+  // Load each annotation tables after the first.
   AnnTab=loadTable("../sharedResources/zFin/zFin-"+namelist[i]+"-AnnTabFin.csv","header");
+  
   for(int j=0;j<tj;j++){
     if(!ignore[j]){
       if(AnnTab.getFloat(j,"ann")==1){
@@ -44,13 +49,16 @@ String Con1="";
 for(int i=0;i<ti;i++){
   Con1+="1";
 }
+// Output file (Strings.csv) path/name is set here.
 PrintWriter Output=createWriter("../sharedResources/Strings.csv");
+// Write the output file.
 Output.println("tag,noninverted,inverted");
 for(int j=0;j<tj;j++){
   if(!ignore[j]&&!noninverted[j].equals(Con1)&&!inverted[j].equals(Con1)){
     Output.println(Tag[j]+","+noninverted[j]+","+inverted[j]);
   }
 }
+// Save the output file.
 Output.flush();
 Output.close();
 exit();
