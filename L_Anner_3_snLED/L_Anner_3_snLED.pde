@@ -8,60 +8,61 @@
    nucleotide and protein sequences of the ORF with the lowest LED, for each gene.
 */
 int onGenome=0;
-int Genome;String ComCon;Table AnnTab;
+int Genome;String ComCon;Table AnnTabFin;
 int Tag;boolean rRNA,tRNA,miscRNA,psHS,PrPgO,PrPgT,Plas,Mis,RPS,foundMatch;
 float percentForIntact;String gene,split1,split2,praTrans;
-String[][]symTrans;String[][] Assesment;String[] rna=new String[1];
+String[][]symTrans;String[][] Assesment;
 String[] mbtSeq;
 int befAf=25;
 String[] namelist;
 Table Namelist;
-float[] Cutoffs;
 String[] posStarts= {"TTG","CTG","GTG","ATG","ATT","ATC","ATA","ATN","ATK","ATM","ATR","ATY","ATS","ATW","ATB","ATV","ATH","NTG","KTG","MTG","RTG","YTG","STG","WTG","BTG","VTG","HTG"};
 void setup(){
+  // Load query organism abbreviations.
   Namelist=loadTable("../sharedResources/namelist.csv","header");
   int ti=Namelist.getRowCount();
   namelist=new String[ti];
   Genome=namelist.length;
-  Cutoffs=new float[ti];
   namelist=Namelist.getStringColumn("abb");
-  Cutoffs=Namelist.getFloatColumn("CutOff");
+  
   for(int i=onGenome;i<Genome;i++){
+    // Load the ComCon and AnnTabFin files.
     ComCon=loadStrings("../sharedResources/ComCon/"+namelist[onGenome]+"-ComCon.txt")[0];
-    AnnTab=loadTable("../sharedResources/AnnTabFin/"+namelist[onGenome]+"-AnnTab.csv","header");
-    Lev DTFA;//RawSeq Split;translator geneTrans;
-    AnnTab.insertColumn(5,"ann",Table.FLOAT);
-    AnnTab.insertColumn(6,"score",Table.INT);
-    AnnTab.insertColumn(7,"weightScore",Table.FLOAT);
-    AnnTab.insertColumn(8,"flags",Table.STRING);
-    int tj=AnnTab.getRowCount();
+    AnnTabFin=loadTable("../sharedResources/AnnTabFin/"+namelist[onGenome]+"-AnnTab.csv","header");
+    Lev DTFA;
+    // Values for annotation are added in this program. THese are subsewuenly used by LAnner_4_R_Write, but are overwriten in LAnner_7_Predictor.
+    AnnTabFin.insertColumn(5,"ann",Table.FLOAT); 
+    AnnTabFin.insertColumn(6,"score",Table.INT);
+    AnnTabFin.insertColumn(7,"weightScore",Table.FLOAT);
+    AnnTabFin.insertColumn(8,"flags",Table.STRING);
+    int tj=AnnTabFin.getRowCount();
     for(int j=0;j<tj;j++){
-      AnnTab.setFloat(j,"weightScore",20);
+      AnnTabFin.setFloat(j,"weightScore",20);
     }
-    AnnTab.addColumn("trans",Table.STRING);
-    AnnTab.addColumn("seq",Table.STRING);
+    AnnTabFin.addColumn("trans",Table.STRING);
+    AnnTabFin.addColumn("seq",Table.STRING);
     for(int j=0;j<tj;j++){
       boolean reverse=false;
       rRNA=false;tRNA=false;miscRNA=false;psHS=false;PrPgO=false;PrPgT=false;Plas=false;Mis=false;RPS=false;
-      if(AnnTab.getString(j,"dir").charAt(0)=='r'){
+      if(AnnTabFin.getString(j,"dir").charAt(0)=='r'){
         reverse=true;
       }
-      //Deal with Tags
+      //Assign Flags to denote several things (inclusion in the plasmid,one of the phage islands, being a non protein-coding gene, or having a programed translational frameshift).
+      //This is system specific and will have to be altered if addapting to another reference genome.
       Tag=-1;rRNA=false;tRNA=false;miscRNA=false;psHS=false;PrPgO=false;PrPgT=false;Plas=false;Mis=false;RPS=false;
-      //Acount for tRNA rRNA plasmid and HS pseudo genes
-      String cTag=AnnTab.getString(j,"tag");char type=cTag.charAt(cTag.length()-5);
+      String cTag=AnnTabFin.getString(j,"tag");char type=cTag.charAt(cTag.length()-5);
       int tNum=int(cTag.substring(cTag.length()-4));
       if(type=='_'){
         if(tNum>=2857 && tNum<=2946){
-          AnnTab.setString(j,"flags","PpIs2");PrPgT=true;
+          AnnTabFin.setString(j,"flags","PpIs2");PrPgT=true;
           Tag=tNum+60000;
         }else{
           if(tNum>=2513 && tNum<=2554){
-            AnnTab.setString(j,"flags","PpIs1");PrPgO=true;
+            AnnTabFin.setString(j,"flags","PpIs1");PrPgO=true;
             Tag=tNum+50000;
           }else{
             if(tNum==773||tNum==877||tNum==888||tNum==1078||tNum==1113){
-              AnnTab.setString(j,"flags","miscRNA");miscRNA=true;
+              AnnTabFin.setString(j,"flags","miscRNA");miscRNA=true;
               Tag=tNum+30000;
             }else{
               Tag=tNum;
@@ -71,31 +72,31 @@ void setup(){
       }else{
         if(type=='r'){
           Tag=10000+tNum;
-          AnnTab.setString(j,"flags","rRNA");
+          AnnTabFin.setString(j,"flags","rRNA");
           rRNA=true;
         }else{
           if(type=='t'){
             Tag=20000+tNum;
-            AnnTab.setString(j,"flags","tRNA");tRNA=true;
+            AnnTabFin.setString(j,"flags","tRNA");tRNA=true;
           }else{
             if(type=='s'){
               if(cTag.substring(5,6).equals("p")){
                 if(tNum>=2857 && tNum<=2946){
                   Tag=65000+tNum;
-                  AnnTab.setString(j,"flags","PpIs2,pseuHS");PrPgT=true;psHS=true;
+                  AnnTabFin.setString(j,"flags","PpIs2,pseuHS");PrPgT=true;psHS=true;
                 }else{
                   if(tNum>=2513 && tNum<=2554){
                     Tag=55000+tNum;
-                    AnnTab.setString(j,"flags","PpIs1,pseuHS");PrPgO=true;psHS=true;
+                    AnnTabFin.setString(j,"flags","PpIs1,pseuHS");PrPgO=true;psHS=true;
                   }else{
                     Tag=5000+tNum;
-                    AnnTab.setString(j,"flags","pseuHS");psHS=true;
+                    AnnTabFin.setString(j,"flags","pseuHS");psHS=true;
                   }
                 }
               }else{
                 if(cTag.substring(5,6).equals("P")){
                   Tag=45000+tNum;
-                  AnnTab.setString(j,"flags","Plas,pseuHS");
+                  AnnTabFin.setString(j,"flags","Plas,pseuHS");
                   Plas=true;
                   psHS=true;
                 }
@@ -103,31 +104,28 @@ void setup(){
             }else{ 
               if(type=='P'){
                 Tag=40000+tNum;
-                AnnTab.setString(j,"flags","Plas");Plas=true;
+                AnnTabFin.setString(j,"flags","Plas");Plas=true;
               }
             }
           }
         }
       }
-      if(Tag==0){AnnTab.setString(j,"flags","RPstar");RPS=true;}
-      if(Tag==791){AnnTab.setString(j,"flags","PrTrFr");}
+      if(Tag==0){AnnTabFin.setString(j,"flags","RPstar");RPS=true;}
+      if(Tag==791){AnnTabFin.setString(j,"flags","PrTrFr");}
       if(Tag==-1){
         println("bad tag ");
         println(cTag.substring(cTag.length()-4));
         println(type);
         exit();
       }
-      // 5000-9500 = Pseudo in HS,
-      // 10000s = rRNA 20000s = tRNA, 30000s = misc. RNA, 40000s plasmid, 45000s = plasmid and pseudo, 
-      // 50000s = prophage island 1 & nonpseudo in HS, 55000s = prophage island 1 & pseudo in HS,
-      // 60000s = prophage island 2 & nonpseudo in HS, 65000s = prophage island 2 & pseudo in HS, 
-      //Start Doing Translation stuff;
-      int geneMin=AnnTab.getInt(j,"min")-1;
-      int geneMax=AnnTab.getInt(j,"max");
+      
+      // Predict translated ORF sequences in both query and reference genomes.
+      int geneMin=AnnTabFin.getInt(j,"min")-1;
+      int geneMax=AnnTabFin.getInt(j,"max");
       String praSeq=getPra(ComCon,geneMin,geneMax);
       if(Tag==791){praSeq=praSeq.substring(0,75)+praSeq.substring(75+1);}
       String symSeq=getSym(ComCon,geneMin,geneMax);
-      if(symSeq.length()==0){Mis=true;AnnTab.setFloat(j,"weightScore",1);AnnTab.setFloat(j,"ann",0);}//streamline the detection of missing genes
+      if(symSeq.length()==0){Mis=true;AnnTabFin.setFloat(j,"weightScore",1);AnnTabFin.setFloat(j,"ann",0);}//streamline the detection of missing genes
       if(geneMin>=befAf){
         symSeq=getSym(ComCon,geneMin-befAf,geneMin)+symSeq+getSym(ComCon,geneMax,geneMax+befAf);
       }else{
@@ -139,18 +137,19 @@ void setup(){
         symTrans=(Tag!=791)?transSym(symSeq,reverse):PTF_handler(symSeq,reverse,befAf+75);
         if(symTrans[0].length!=0){
           DTFA=new Lev(praTrans,symTrans[0],Tag);
+          // Identify the best predicted ORF.
           Assesment=DTFA.Getbest();
-          AnnTab.setInt(j,"score",int(Assesment[0][1]));
-          AnnTab.setFloat(j,"weightScore",float(Assesment[0][1])/(float(geneMax-(geneMin))/3));
-          AnnTab.setFloat(j,"ann",0.25);//placeholder value
+          AnnTabFin.setInt(j,"score",int(Assesment[0][1]));
+          AnnTabFin.setFloat(j,"weightScore",float(Assesment[0][1])/(float(geneMax-(geneMin))/3));
+          AnnTabFin.setFloat(j,"ann",0.25);//placeholder value
           if(Assesment.length==1){
-            AnnTab.setString(j,"trans",Assesment[0][0]);
+            AnnTabFin.setString(j,"trans",Assesment[0][0]);
             foundMatch=false;
             int tk=symTrans[0].length;
             for(int k=0;(k<tk&&!foundMatch);k++){
               if(symTrans[0][k].equals(Assesment[0][0])){
                 foundMatch=true;
-                AnnTab.setString(j,"seq",symTrans[1][k]);
+                AnnTabFin.setString(j,"seq",symTrans[1][k]);
               }
             }
           }else{
@@ -162,7 +161,7 @@ void setup(){
               }
             }
             mbtSeq=new String[gene.split("\t").length];
-            AnnTab.setString(j,"trans",gene);
+            AnnTabFin.setString(j,"trans",gene);
             int tl=gene.split("\t").length;
             for(int l=0;l<tl;l++){
               foundMatch=false;
@@ -174,21 +173,24 @@ void setup(){
               }
             }
             gene=join(mbtSeq,",");
-            AnnTab.setString(j,"seq",gene);
+            AnnTabFin.setString(j,"seq",gene);
             gene="";
           }
         }else{
-          AnnTab.setFloat(j,"ann",0.0);
-          AnnTab.setFloat(j,"weightScore",1);
+          AnnTabFin.setFloat(j,"ann",0.0);
+          AnnTabFin.setFloat(j,"weightScore",1);
         }
       }else{
         if((rRNA||tRNA||miscRNA||psHS||Tag==0)&&!Mis){
-          AnnTab.setFloat(j,"ann",-0.1);
-          AnnTab.setFloat(j,"weightScore",20);
+          AnnTabFin.setFloat(j,"ann",-0.1);
+          AnnTabFin.setFloat(j,"weightScore",20);
         }
       }
     }
-    saveTable(AnnTab,"../sharedResources/zFin/zFin"+"-"+namelist[onGenome]+"-AnnTabFin.csv");
+    
+    // Save the "zFin-*-AnnTabFin.csv" output file.
+    saveTable(AnnTabFin,"../sharedResources/zFin/zFin"+"-"+namelist[onGenome]+"-AnnTabFin.csv");
+    // Inform the user of the progression through the list of query genomes.
     println("done with "+namelist[onGenome]+" ("+(onGenome+1)+"/"+Genome+")");
     onGenome++;
     if(onGenome==Genome){println("Success!");exit();}
@@ -196,6 +198,8 @@ void setup(){
 }
 
 void draw(){}
+
+// This function handles the translation of all ORFs, in a given direction, within a section of Query organism sequence
 String[][] transSym(String in,boolean R){
   if(R){in=revComp(in);}
   int[] startPositions=FindGivenStarts(in,posStarts).toArray();
@@ -207,6 +211,8 @@ String[][] transSym(String in,boolean R){
   }
   return out;
 }
+
+// This function handles both possibilities for genes with a known programed translational frameshift.
 String[][]PTF_handler(String in,boolean R,int pos){
   String[][] thru1=transSym(in,R);
   String in2=in.substring(0,pos)+in.substring(pos+1);
@@ -214,10 +220,14 @@ String[][]PTF_handler(String in,boolean R,int pos){
   String[][] out={concat(thru1[0],thru2[0]),concat(thru1[1],thru2[1])};
   return out;
 }
+
+// This function handles the translation of the reference organism ORFs.
 String transPra(String in,boolean R){
   if(R){in=revComp(in);}
   return doTrans(in);
 }
+
+// This function finds starts (canonical or alternate) within a sequence.
 IntList FindGivenStarts(String Seq,String[] startCod){
   IntList output=new IntList();
   int th=startCod.length,ti=Seq.length()-2;
@@ -231,6 +241,8 @@ IntList FindGivenStarts(String Seq,String[] startCod){
   }
   return output;
 }
+
+// This function preforms reverse complementation.
 String revComp(String in){
   String out="";
   int inlen=in.length();
@@ -258,7 +270,7 @@ String revComp(String in){
   return out;
 }
 
-
+// This function extracts a region of the reference organism genome sequence from the ComCon sequence.
 String getPra(String in, int start, int stop){
   String out="";
   for(int i=start;i<stop;i++){
@@ -272,6 +284,8 @@ String getPra(String in, int start, int stop){
   }
   return out;
 }
+
+// This function extracts a region of the query organism consensus sequence from the ComCon sequence.
 String getSym(String in, int start, int stop){
   String out="";
   for(int i=start;i<stop;i++){
@@ -297,7 +311,8 @@ String getSym(String in, int start, int stop){
   return out;
 }
 
-String doTrans(String nSeq){//works on a nucleotide sequence starting at a pre-found start codon (regular or alternate)
+// This function translates a nucleotide sequence starting at a pre-found start codon (canonical or alternate)
+String doTrans(String nSeq){
   String pSeq="M";
   boolean foundStop=false;
   for(int i=3;i<nSeq.length()-2&&!foundStop;i+=3){
