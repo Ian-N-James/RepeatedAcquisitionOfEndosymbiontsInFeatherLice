@@ -6,6 +6,7 @@
 */
 
 void setup(){
+  // Load query organism abbreviations.
   String[] namelist=loadTable("../sharedResources/namelist.csv","header").getStringColumn("abb");
   int ti=namelist.length;
   StringDict rowName=new StringDict();
@@ -15,10 +16,16 @@ void setup(){
   rowName.set("Min (with gaps)","min");
   rowName.set("Max (with gaps)","max");
   rowName.set("product","product");
+  
   for(int i=0;i<ti;i++){
+    // Load the AnnTabs here.
     String[] anntab=loadStrings("../sharedResources/AnnTab/"+namelist[i]+"-AnnTab.csv");
     int tj=anntab.length;
+    
+    // Output file (*-AnnTabFin.txt) path/name is set here.
     PrintWriter anntabfin=createWriter("../sharedResources/AnnTabFin/"+namelist[i]+"-AnnTab.csv");
+    
+    // Simplify the header line.
     String[] line=lineSpliter(anntab[0]);
     int tk=line.length;
     int prodPos=-1,tagPos=-1;
@@ -29,19 +36,26 @@ void setup(){
     }
     anntabfin.print(join(line,","));
     line=lineSpliter(anntab[1]);
+    
+    // Specific to S. praecaptivus as a reference organism.
     if(tagPos>=0){line[tagPos]="Sant_0000";}
     if(prodPos>=0){line[prodPos]="Origin of Replication";}
     anntabfin.print("\n"+join(line,","));
+    
+    // Remove non-delimiting commas.
     for(int j=2;j<tj;j++){
       line=lineSpliter(anntab[j]);
       anntabfin.print("\n"+join(line,","));
     }
+    
+    // Save the AnnTabFin file.
     anntabfin.flush();
     anntabfin.close();
   }
   exit();
 }
 void draw(){}
+// This function removes non-delimiting commas an individual line.
 String[] lineSpliter(String in){
   String[] out={};
   boolean inQuote=false;
