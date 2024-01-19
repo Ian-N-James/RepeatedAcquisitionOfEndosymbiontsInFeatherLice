@@ -12,9 +12,11 @@
    be identified by locus tags.
 */
 void setup(){
+  // Load the results from Contingency_5_proximusAnalysis.
   Table in=loadTable("dataFromR2.txt","tsv,header");
   in.removeColumn("");
   in.removeColumn("id");
+  // Load the file containing locus tags and gene names.
   Table tagNam=loadTable("tagsAndNams.csv","header");
   Table out=new Table();
   String[] inColNam=in.getColumnTitles();
@@ -22,6 +24,9 @@ void setup(){
   for(int i=0;i<ti;i++){
     out.addColumn(inColNam[i]);
   }
+  /* Split the genes in each pattern into two sets, such that those that each set 
+     has genes with direct contingent relationships to each other, and reciprocal 
+     relationships to genes in the opposite set.    */
   out.addColumn("set 1");
   out.addColumn("set 2");
   ti=in.getRowCount();String[] hold;String rec,nonrec;
@@ -39,14 +44,12 @@ void setup(){
     out.setFloat(i,"Jaccard similarity",in.getFloat(i,"Jaccard similarity"));
     
     for(int j=0;j<tj;j++){
-      //println(hold[j].split("_"));
       pats[i].append(int(hold[j].split("_")[1]));
       if(hold[j].substring(hold[j].length()-2).equals("_I")){
         rec+=","+hold[j].substring(0,hold[j].length()-2);
       }else{
         nonrec+=","+hold[j];
       }
-      //.subsrting(1) removes the comma that comes before the first gene tag.
       if(nonrec.length()>1){out.setString(i,"set 1",nonrec.substring(1));
       }else{out.setString(i,"set 1","");}
       if(rec.length()>1){out.setString(i,"set 2",rec.substring(1));
@@ -55,7 +58,7 @@ void setup(){
     }
     pats[i].sort();
   }
-  // Filter duplicates (resulting from inclusion of reciprocal sequences)
+  // Filter duplicates and subsets, initially flagging them.
   IntList pattern,members;
   boolean[] inPat=new boolean[ti];
   out.addColumn("remove",Table.INT);
@@ -85,7 +88,7 @@ void setup(){
         }
         if(maximas.size()>1){
           tj=maximas.size();
-          IntList MSMs=new IntList();// set 1 Members.
+          IntList MSMs=new IntList();
           
           for(int j=0;j<tj;j++){
             MSMs.append(out.getString(pattern.get(maximas.get(j)),"set 1").split(",").length);
@@ -100,12 +103,16 @@ void setup(){
       }
     }
   }
+  //Save the first output file.
   saveTable(out,"removal Flag.csv");
+  //Remove duplicates and subsets.
   for(int i=ti-1;i>=0;i--){
     if(out.getInt(i,"remove")==1){out.removeRow(i);}
   }
   out.removeColumn("remove");
+  //Save the second output file.
   saveTable(out,"proximusResults_tagsOnly.csv");
+  // Where possible, replace locus tags with gene names.
   ti=out.getRowCount();
   for(int i=0;i<ti;i++){
     String[] patHold=out.getString(i,"set 1").split(",");
@@ -115,7 +122,6 @@ void setup(){
       if(namIndex>=0){patHold[j]=tagNam.getString(namIndex,"name");}
     }
     out.setString(i,"set 1",join(patHold,", "));
-    
     patHold=out.getString(i,"set 2").split(",");
     tj=patHold.length;
     for(int j=0;j<tj;j++){
@@ -125,12 +131,12 @@ void setup(){
     out.setString(i,"set 2",join(patHold,", "));
     
   }
+  // Save the third output file.
   saveTable(out,"proximusResults.csv");
-  
-  
   exit();
 }
 void draw(){}
+// Check if a set of genes is a subset or duplicate of another.
 boolean isSubset(StringList in1,StringList in2){
   if(in1.size()>in2.size()){
     int ti=in2.size(),tj=in1.size();
