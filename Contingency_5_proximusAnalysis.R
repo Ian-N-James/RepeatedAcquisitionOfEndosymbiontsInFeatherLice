@@ -1,9 +1,11 @@
-#Takes the binary strings (rdat_I.csv) and performs analysis using the Proximus algorithm. Exports a file (dataFromR2.txt) to the directory of the  “Contingency_6_nameAndFilter” sketch (see below) that contains the results of the analysis.
+# Takes the binary strings (rdat_I.csv) and performs analysis using the Proximus algorithm. Exports a file (dataFromR2.txt) to the directory of the  “Contingency_6_nameAndFilter” sketch (see below) that contains the results of the analysis.
+
 library("scales")
 library("cba")
 setwd(getSrcDirectory(function(){})[1])
-
+# Load the binary column data (This is the reformatted binary string data from "Contingency_4_prepDataForR".).
 lousedatI<-read.csv("Contingency_4_prepDataForR/rdat_I.csv")
+# Convert the imported data frame into a logical matrix that, which is the data type that Proximus uses.
 tk<-ncol(lousedatI)
 namsI<-colnames(lousedatI)
 lousedatI$patDis<-rescale(lousedatI$patDis,to=c(-1,1))
@@ -20,16 +22,16 @@ for(k in 3:tk){
 		}
 	}
 }
-save(lousedat2,file="lousedat2.rdata")
-load("lousedat2.rdata")
+# Run the Proximus algorithm. 
 proxI<-proximus(lousedat2,max.radius=7,min.size=1)
 pSumI<-summary(proxI)
+# Filter the Proximus results down to only those patterns that have more than one gene, and have either a relative error value of less than 0.05 and/or a Jaccard similarity of greater than 0.95.
 patIDs<-which(pSumI$pattern[,1]>1 & (pSumI$pattern[,4]<0.05 | pSumI$pattern[,6]>0.95))
 tm<-length(patIDs)
+# Save the output file to the sketch directory of Contingency_6_nameAndFilter.
 cat("\tid\tsize\trelative error\tFrobenius norm\tJaccard similarity\tmembers",file="Contingency_6_nameAndFilter/dataFromR2.txt",sep="\n",append=FALSE)
 m<-0
 for(m in 1:tm){
-	#/Users/Ian/documents/processing/NewPipe2/
 	cat(m,file="Contingency_6_nameAndFilter/dataFromR2.txt",sep=" ",append=TRUE)
 	cat("\t",file="Contingency_6_nameAndFilter/dataFromR2.txt",sep=" ",append=TRUE)
 	cat(patIDs[m],file="Contingency_6_nameAndFilter/dataFromR2.txt",sep="\t",append=TRUE)
@@ -43,5 +45,5 @@ for(m in 1:tm){
 	cat(pSumI$pattern[patIDs[m],6],file="Contingency_6_nameAndFilter/dataFromR2.txt",sep="\t",append=TRUE)
 	cat("\t",file="Contingency_6_nameAndFilter/dataFromR2.txt",sep=" ",append=TRUE)
 	cat(proxI$rownames[proxI$a[[patIDs[m]]]$x],file="Contingency_6_nameAndFilter/dataFromR2.txt",sep=" ",append=TRUE)
-		cat("\n",file="Contingency_6_nameAndFilter/dataFromR2.txt",sep=" ",append=TRUE)
+	cat("\n",file="Contingency_6_nameAndFilter/dataFromR2.txt",sep=" ",append=TRUE)
 }
