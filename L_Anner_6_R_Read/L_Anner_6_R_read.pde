@@ -3,8 +3,11 @@
 */
 
 void setup(){
+  // Load the namelist file.
   Table namelist=loadTable("../sharedResources/namelist.csv","header");
+  // Load the EMdata.csv input file. 
   Table rDat=loadTable("../sharedResources/EMdata.csv","header");
+  // Compute cutoff values based on the results of the E-M analysis.
   int ti=rDat.getRowCount();
   for(int i=0;i<ti;i++){
     String abb=convert(rDat.getString(i,"name"));
@@ -14,10 +17,13 @@ void setup(){
       println(abb+" not found in namelist");
     }
   }
+  // Save the cutoff values to the namelist table.
   saveTable(namelist,"../sharedResources/namelist.csv");
   exit();
 }
 void draw(){}
+
+// This function converts the abbreviations back from the modified form that was required in R.
 String convert(String in){
   int ti=in.length();
   String[] con={"ZERO","ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT","NINE"};
