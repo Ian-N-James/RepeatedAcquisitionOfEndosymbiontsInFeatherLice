@@ -2,22 +2,29 @@
    R code to preform expectation-maximization analysis. Produces 
    LAnner_5_ExpectationMaximization.
 */
+
 void setup(){
   String curDir=sketchPath();
   curDir=join(shorten(curDir.split("/")),"/")+"/sharedResources/";
+  // Establish the output file (LAnner_5_ExpectationMaximization.R) path/name.
   PrintWriter Output=createWriter(curDir+"LAnner_5_ExpectationMaximization.R");
   Table zFin;
+  //Write the first lines of the output.
   Output.println("#Preforms expectation-maximization (E-M) analysis on the snLEDs. Exports a table (EMdata.csv) containing the results of the E-M analysis.");
   Output.println("library(\"mixtools\")");
-  String[] namelist=loadStrings("../sharedResources/namelist.txt");
-  Boolean pOneAlR; // have we printed one already for this sym?
-  //print the symbiont data lines
+  
+  // Load query organism abbreviations.
+  String[] namelist=loadTable("../sharedResources/namelist.csv","header").getStringColumn("abb");
+  Boolean pOneAlR;
   int ti=namelist.length;
+  // This section writes the data to variables in the outputed R file. 
   for(int i=0;i<ti;i++){
     Output.print(substituter(namelist[i])+"<-c(");
+    // Load the zFin-*-AnnTabFin.csv imput files.
     zFin=loadTable("../sharedResources/zFin/zFin-"+namelist[i]+"-AnnTabFin.csv","header");
     pOneAlR=false;
     int tj=zFin.getRowCount();
+    
     for(int j=0;j<tj;j++){
       if(
       zFin.getFloat(j,"weightScore")>=0 && 
@@ -42,7 +49,7 @@ void setup(){
     }
     Output.print(")\n");
   }
-  //print the symName Line
+  //Write the section of the output file containing the modified query genome names.
   Output.print("symName<-c(");
   for(int i=0;i<ti;i++){
     if(i!=0){
@@ -51,17 +58,18 @@ void setup(){
       Output.print("\""+substituter(namelist[i]+"\""));
     }
   }
-  Output.print(")\n\n## setup the Lists of data to be outputted with ridiculous values so that any that do not get a value assigned can be spotted easily\n");
+  //Write the section of the output file containing the E-M algorithim.
+  Output.print(")\n\n");
   Output.print("FirstMean<-c(");for(int i=0;i<namelist.length;i++){if(i!=0){Output.print(",-20");}else{Output.print("-20");}}Output.print(")\n");
   Output.print("SecondMean<-c(");for(int i=0;i<namelist.length;i++){if(i!=0){Output.print(",-20");}else{Output.print("-20");}}Output.print(")\n");  
   Output.print("FirstSigma<-c(");for(int i=0;i<namelist.length;i++){if(i!=0){Output.print(",-20");}else{Output.print("-20");}}Output.print(")\n");
   Output.print("SecondSigma<-c(");for(int i=0;i<namelist.length;i++){if(i!=0){Output.print(",-20");}else{Output.print("-20");}}Output.print(")\n");
   Output.print("loglike<-c(");for(int i=0;i<namelist.length;i++){if(i!=0){Output.print(",-20");}else{Output.print("-20");}}Output.print(")\n");
-  Output.print("\n## do the EM models\n");
+  Output.print("\n## Perform the E-M analysis\n");
   for(int i=0;i<ti;i++){
     Output.print("EMof"+substituter(namelist[i])+"<-normalmixEM("+substituter(namelist[i])+",mu=c(0,1),sigma=c(1,1))\n");
   }
-  Output.print("\n## SetupOutputs\n");
+  Output.print("\n");
   for(int i=0;i<ti;i++){
     Output.print("FirstMean["+(i+1)+"]<-EMof"+substituter(namelist[i])+"$mu[1]\n");
     Output.print("SecondMean["+(i+1)+"]<-EMof"+substituter(namelist[i])+"$mu[2]\n");
@@ -69,14 +77,16 @@ void setup(){
     Output.print("SecondSigma["+(i+1)+"]<-EMof"+substituter(namelist[i])+"$sigma[2]\n");
     Output.print("loglike["+(i+1)+"]<-EMof"+substituter(namelist[i])+"$loglik[1]\n");
   }
-  Output.print("\n## GetOutputs\nsymName\nFirstMean\nSecondMean\nFirstSigma\nSecondSigma\nloglike\n");
+  Output.print("\n## Print outputs to the console.\nsymName\nFirstMean\nSecondMean\nFirstSigma\nSecondSigma\nloglike\n");
+  Output.print("##Save the output file (EMdata.csv). \n");
   Output.print("out<-data.frame(name=symName,mean1=FirstMean,mean2=SecondMean,sigma1=FirstSigma,sigma2=SecondSigma,loglike=loglike,cutoff=(FirstMean+3*FirstSigma))\n");
   Output.print("write.table(out,\""+curDir+"EMdata.csv\",sep=\",\",row.names=FALSE)");
+  // Save the output file.
   Output.flush();Output.close();
   exit();
 }
-void draw(){
-}
+void draw(){}
+// This function slightly alters query organism abbreviations to make them compatible with being variable names in R.
 String substituter(String in){
   String out="";
   for(int i=0;i<in.length();i++){
