@@ -5,12 +5,15 @@
 */
 void setup(){
   Table zFin;
+  // Load the namelist file.
   Table namelist=loadTable("../sharedResources/namelist.csv","header");
   int ti=namelist.getRowCount();float cutoff;
   for(int i=0;i<ti;i++){
     cutoff=namelist.getFloat(i,"CutOff");
+    // Load the zFin-*-AnnTabFin files.
     zFin=loadTable("../sharedResources/zFin/zFin-"+namelist.getString(i,"abb")+"-AnnTabFin.csv","header");
     int tj=zFin.getRowCount();
+    // Assign the predicted status. A value of -0.1 flags non protein-coding genes that are ignored in subsequent analyses.
     for(int j=0;j<tj;j++){
       if(zFin.getFloat(j,"ann")==-0.1){
         zFin.setFloat(j,"ann",-0.1);
@@ -29,6 +32,7 @@ void setup(){
         }
       }
     }
+    // Save the output files.
     saveTable(zFin,"../sharedResources/zFin/zFin-"+namelist.getString(i,"abb")+"-AnnTabFin.csv");
   }
   exit();
