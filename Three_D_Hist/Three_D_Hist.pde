@@ -12,17 +12,23 @@ void setup(){
   size(2125,1675);
   background(255);
   smooth(8);
+  
+  // Load the color map.
   color[][] gradients=loadColorsHex("gradient.txt");
   PFont txt=createFont("ArialMT",48);
+  
+  // Load query organism abbreviations.
   Table namelist=loadTable("../sharedResources/namelist.csv","header");
   float[] pd=namelist.getFloatColumn("patDis");
   int syms=pd.length;
   minpd=pd[0];
   maxpd=pd[syms-1];
+  // Load namelist table
   String[] names=namelist.getStringColumn("abb");
   float[] cutoff=namelist.getFloatColumn("CutOff");
   int[][] counts=new int[syms][100];
   for(int i=0;i<syms;i++){
+    // Load the zFin-*-AnnTabFin files.
     Table zFin=loadTable("../sharedResources/zFin/zFin-"+names[i]+"-AnnTabFin.csv","header");
     int tj=zFin.getRowCount();
     for(int j=0;j<tj;j++){
@@ -32,36 +38,19 @@ void setup(){
       counts[i][floor(zFin.getFloat(j,"weightScore")*100)]++;
     }
   }
-  //set up plot area:
-  //original:                            X     Y      
-  //bottom left corner, pre Z shift:    355, 1754
-  //top left corner, pre Z shift:       355,  954
-  //bottom left corner, post Z shift:  1092, 1018
-  //top left corner, post Z shift:     1092,  218
-  //bottom right corner, pre Z shift:  1453, 1754
-  //bottom right corner, post Z shift: 2190, 1018
-  //top right corner, post Z shift:    2190,  218
-  // plot area                    
-  // X:1098, 10.98 pixels per bar. 
-  // Y:800, 4 pixels per count.   
-  // Z shift:                     
-  // ratio 1X:1Y                  
-  // 737 pixels each
+  // Set up the plot area.
   float minXprZ=200, minYprZ=754, minXpoZ=937,minYpoZ=18;
   float maxXprZ=1298,maxYprZ=1554,maxXpoZ=2035,maxYpoZ=818;
   float plotWid=maxXprZ-minXprZ, plotHei=maxYprZ-minYprZ;
   float zShiftX=minXpoZ-minXprZ-10/3, zShiftY=minYprZ-minYpoZ-10/3;
   float barWid=plotWid/100;
   strokeWeight(2);stroke(155);
-  //horizontal
   line(minXprZ,maxYprZ,maxXprZ,maxYprZ);
   line(minXpoZ,maxYpoZ,maxXpoZ,maxYpoZ);
   line(minXpoZ,minYpoZ,maxXpoZ,minYpoZ);
-  //vertical
   line(minXprZ,minYprZ,minXprZ,maxYprZ);
   line(minXpoZ,minYpoZ,minXpoZ,maxYpoZ);
   line(maxXpoZ,minYpoZ,maxXpoZ,maxYpoZ);
-  //diagonal
   line(minXprZ,maxYprZ,minXpoZ,maxYpoZ);
   line(minXprZ,minYprZ,minXpoZ,minYpoZ);
   line(maxXprZ,maxYprZ,maxXpoZ,maxYpoZ);
@@ -71,12 +60,10 @@ void setup(){
     line(minXpoZ,maxYpoZ-h*dvlnScl,maxXpoZ,maxYpoZ-h*dvlnScl);
     line(minXprZ,maxYprZ-h*dvlnScl,minXpoZ,maxYpoZ-h*dvlnScl);
   }
-  //AxLabX
   textAlign(CENTER,TOP);fill(0);textFont(txt);strokeWeight(3);
   text("Corrected Levenshtein Edit Distance",(minXprZ+maxXprZ)/2,maxYprZ+40);
   text("1",minXprZ,maxYprZ+25);line(minXprZ,maxYprZ+20,minXprZ,maxYprZ);
   text("0",maxXprZ,maxYprZ+25);line(maxXprZ,maxYprZ+20,maxXprZ,maxYprZ);
-  //AxLabY
   textAlign(CENTER,BOTTOM);
   pushMatrix();
   translate(minXprZ-125,(minYprZ+maxYprZ)/2);
@@ -91,7 +78,6 @@ void setup(){
     text(str(h*50),minXprZ-25,maxYprZ-h*dvlnScl-5);
     line(minXprZ-20,maxYprZ-h*dvlnScl-1,minXprZ,maxYprZ-h*dvlnScl-1);
   }
-  //AxLabZ
   stroke(0);strokeWeight(8);int adjX=55,adjY=0;
   line(maxXpoZ+adjX,maxYpoZ+adjY,maxXprZ+adjX,maxYprZ+adjY);
   line(maxXprZ+adjX,maxYprZ+adjY,maxXprZ+adjX+10*1.25,maxYprZ+adjY-40*1.25);
@@ -115,6 +101,8 @@ void setup(){
   text("Patristic Distance",0,0);
   popMatrix();
   strokeWeight(1);
+  
+  // Plot the histogram
   for(int i=0;i<syms;i++){
     float xMod=map(pd[i],minpd,maxpd,zShiftX,0);
     float yMod=map(pd[i],minpd,maxpd,zShiftY,0);;
@@ -128,12 +116,15 @@ void setup(){
       }
     }
   }
+  
+  // Save the output files.
   save("3DHIST.png");
   save("3DHIST.tif");
   exit();
 }
 void draw(){}
 
+// This function draws an individual bar of the histogram.
 void bar(float staX,float staY,float staW,float staH,color inColF,color inColS){
   color s=getGraphics().strokeColor;float w=getGraphics().strokeWeight;
   stroke(inColS);strokeWeight(0.1);
