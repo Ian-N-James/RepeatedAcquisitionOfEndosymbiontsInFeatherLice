@@ -3,16 +3,16 @@
   aligned to the reference sequence (file name = *-PraCon.txt located in 
   exampleFiles in this repository) that is gapped in accordance with the 
   alignment. The script then outputs a sequence file encoded to display the 
-  contents of both input files (file name = *-ComCon.txt, located in 
-  exampleFiles in this repository).
+  contents of both input files (file name = *-ComCon.txt) in accordance with 
+  the key located main directory of the GitHub repo named "ComConKey.svg". 
 */
 
-String[] namelist=loadTable("../sharedResources/namelist.csv","header").getStringColumn("abb");
-// ti = target for i. In this case this is the number of symbionts. 
+String[] namelist=loadTable("../sharedResources/namelist.csv","header").getStringColumn("abb"); 
 int ti=namelist.length;
 for(int i=0;i<ti;i++){
   String symCon=loadStrings("../sharedResources/SymCon/"+namelist[i]+"-SymCon.txt")[0];
   String praCon=loadStrings("../sharedResources/PraCon/"+namelist[i]+"-PraCon.txt")[0];
+  
   /* If the documents have been exported correctly, and came from the same file,
      then they will always be the same length. If the documents are not the 
      same length, then this indicates that something is wrong and that the 
@@ -20,12 +20,7 @@ for(int i=0;i<ti;i++){
   */ 
   if(praCon.length()==symCon.length()){
     int tj=symCon.length();
-    // tj (target for j) is assigned, so that the opereation of checking the length of a string does not have to happen on the order of 4
     boolean same=true;
-    // It is unlikely that the two consensus sequences for anything but 
-    // the same exact organism will be exactly the same. If two consensus sequences for 
-    // a symbiont taxa are the exact same, an alert should be given to the user, 
-    // so they can double check the export was preformed correctly. 
     PrintWriter ComCon=createWriter("../sharedResources/ComCon/"+namelist[i]+"-ComCon.txt");
     for(int j=0;j<tj;j++){
       switch(praCon.charAt(j)){
@@ -133,6 +128,10 @@ for(int i=0;i<ti;i++){
     }
     ComCon.flush();
     ComCon.close();
+    // It is unlikely that the two consensus sequences for anything but 
+    // the same exact organism will be exactly the same. If two consensus sequences for 
+    // a symbiont taxa are the exact same, an alert is given to the user, 
+    // so they can double check the export was preformed correctly. 
     if(same){println("warning: "+namelist[i]+" pra- and sym- cons identical");}
   }else{
     println(namelist[i]+" pra- and sym- cons have unequal length"); 
