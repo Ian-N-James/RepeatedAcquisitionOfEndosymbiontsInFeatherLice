@@ -3,31 +3,30 @@
    Proximus analysis in R.
 */
 void setup(){
+  // Load the namelist file.
   Table namelist=loadTable("../sharedResources/namelist.csv","header");
   Table output=new Table();
-  int minOfEach=0;// the actual minimum is one greater than this value.  
+  int minOfEach=0;  
   output.addColumn("sym");
   output.addColumn("patDis");
   int ti;
   
-  //remove the symbionts that are not included in contigency analyses.
+  // Remove the query organisms that are not included in contingency analyses. This is system specific.
   namelist.removeRow(namelist.findRowIndex("Coang","abb"));
   namelist.removeRow(namelist.findRowIndex("5_11_15_4","abb"));
-  
-  
   ti=namelist.getRowCount();
   for(int i=0;i<ti;i++){
     output.addRow();
-    
     output.setString(i,"sym",namelist.getString(i,"abb"));
     output.setFloat(i,"patDis",namelist.getFloat(i,"patDis"));
   }
+  // Load the binary strings.
   Table binstr=loadTable("../sharedResources/Strings.csv","header");
   int tj=ti;String colNam,strStore,strStoreI;
   int cols=0;
   ti=binstr.getRowCount();
+  // Reformat the binary strings.
   for(int i=0;i<ti;i++){
-    
     colNam=binstr.getString(i,"tag");
     strStore=binstr.getString(i,"noninverted");
     strStoreI=binstr.getString(i,"inverted");
@@ -40,23 +39,13 @@ void setup(){
       }
     }
   }
+  //Save the reformated data file.
   saveTable(output,"rdat_I.csv");
   exit();
 }
 void draw(){}
-Table oldOrder(Table in){
-  int[] order={0,1,2,3,5,7,8,6,9,4,11,14,12,13,15,22,10,21,19,16,17,18,26,24,23,25,28,27,32,30,27,31,29,34,33,35};
-  Table out=new Table();
-  out.addColumn("patDis");
-  out.addColumn("abb");
-  for(int i=0;i<36;i++){
-    out.addRow();
-    out.setString(i,"abb",in.getString(order[i],"abb"));
-    out.setFloat(i,"patDis",in.getFloat(order[i],"patDis"));
-  }
-  
-  return out;
-}
+
+// This function returns the number of a given character in a string.
 int charNum(String in,char gn){
   int out=0;
   int ti = in.length();
@@ -65,7 +54,5 @@ int charNum(String in,char gn){
       out++;
     }
   }
-  
-  
   return out;
 }
