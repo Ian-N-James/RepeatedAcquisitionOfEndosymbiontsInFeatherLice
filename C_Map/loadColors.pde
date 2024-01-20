@@ -1,3 +1,4 @@
+// This function loads the color maps.
 float[][] loadColors(String path, boolean reverse){
   float[][] out={{},{},{}};
   String[] in=loadStrings(path);

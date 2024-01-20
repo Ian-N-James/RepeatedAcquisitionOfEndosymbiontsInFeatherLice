@@ -5,7 +5,7 @@
    (out_C_BinaryColMap_NT.tif) with bezier curves depicting the strength of
    contingent relationships between all genes in the dataset. To improve 
    clarity in visualization, genes whose binary strings have Shannon 
-   entropies less than 0.3228 are excluded.
+   entropies less than 0.43 are excluded.
    °Color maps used for rendering the relationships are from CET 
    Perceptually Uniform Colour Maps (https://colorcet.com/index.html) 
    by Peter Kovesi (See also Good Colour Maps: How to Design Them 2015) and 
@@ -22,6 +22,7 @@ String namMod="";
 void setup(){
   size(5000,5000);background(255);
   String colsNam="BinaryColMap";
+  // Load the color maps.
   String colsNamD="linear_ternary-blue_0-44_c57_n256";
   float[][] colsD=loadColors("colorProfiles/"+colsNamD+".csv",revCol);
   String colsNamR="linear_ternary-red_0-50_c52_n256";
@@ -45,28 +46,38 @@ void setup(){
   fill(255,0,255);
   translate(width/2,height/2);
   rotate(PI/2.0);
+  // Load the Hamming distances.
   Table hamming=loadTable("../sharedResources/HammingDistance.csv","header");
+  // Load the Shannon entropies.
   Table shannon=loadTable("../sharedResources/Shannon.csv","header");
-  // Determine the maximum Hamming distance possible, and the central neutral value for Hamming distance.
+  
   maxHammingDistance=shannon.getString(0,"noninverted").length();
   centerHammingValue=maxHammingDistance/2.0; 
   
   
   if(directOnly && recipOnly){directOnly=false;recipOnly=false;}
   println("tablesLoaded "+millis()/1000+" seconds");
+  
+  /* Exclude genes with a Shannon entropy less than 0.43, corresponding to 
+     the exclusion of genes having less than three cases of retention or  
+     loss. This value was selected for this system on the basis that genes 
+     with two or fewer were over represented in the data set of this system. 
+  */   
   int numAbove=0;
-  int sCut=3;
+  float sCut=0.43;
   IntDict tagID=new IntDict();
   int ti=shannon.getRowCount();
   boolean[] aboveShanCut=new boolean[ti];
   for(int i=0;i<ti;i++){
-    if(shanPassFail(shannon.getFloat(i,"Shannon"),sCut)){
+    if(shannon.getFloat(i,"Shannon")>=sCut){
       aboveShanCut[i]=true;
       tagID.add(shannon.getString(i,"tag"),numAbove);
       numAbove++;
     }
   }
   println("Shannon's read "+millis()/1000+" seconds");
+  
+  
   int hCut=0;
   IntList[] tarNums=new IntList[numAbove];
   FloatList[] ShannonEntropies=new FloatList[numAbove];
@@ -74,7 +85,6 @@ void setup(){
   String[] tags=new String[numAbove];
   
   int tj=ti+2;
-  
   int ID;
   String[] HammingTitles=hamming.getColumnTitles();
   for (int i=0;i<numAbove;i++){
@@ -82,7 +92,8 @@ void setup(){
     ShannonEntropies[i]=new FloatList();
     HammingDistances[i]=new IntList();
   }
-  //Table reorg=new Table();
+  
+  // Prepare to reorder the relationships based on their respective relationship strength scores. 
   float score=0;
   int holdHD;float holdSE;
   Table reorg=new Table();
@@ -95,11 +106,11 @@ void setup(){
     if (tagID.hasKey(hamming.getString(i,0))){
       ID=tagID.get(hamming.getString(i,0));
       tags[ID]=hamming.getString(i,0);
-      for (int j=2;j<tj;j++){
-        if (abs(centerHammingValue-hamming.getInt(i,j))>hCut   //DO require relation to pass Hamming cutoff
-          &&tagID.hasKey(HammingTitles[j])                     //DO require target to pass Shannon cutoff
-        && !tarNums[tagID.get(HammingTitles[j])].hasValue(ID)  //do NOT add relations that already exist
-        && !hamming.getString(i,0).equals(HammingTitles[j])    //do NOT add self relations
+      for (int j=2;j<tj;j++){ 
+        if (abs(centerHammingValue-hamming.getInt(i,j))>hCut
+          &&tagID.hasKey(HammingTitles[j])                     
+        && !tarNums[tagID.get(HammingTitles[j])].hasValue(ID)  
+        && !hamming.getString(i,0).equals(HammingTitles[j])    
         ){
           reorg.addRow();
           reorg.setInt(n,"id1",ID);
@@ -126,13 +137,17 @@ void setup(){
   float[] corX=new float[ti];
   float[] corY=new float[ti];
   float tranFac=25;
+  
+  // Load labeling instructions.
   String[] labels=loadStrings("labels"+namMod+".txt");
   float oti=1.0/float(ti),iota=0,sigh=0,cosigh=0;
   int tl=labels.length;String[] taghold,colHold;
-  float RST=0;//Ring Segment Thickness
+  float RST=0;
   float pls=0;
   float mod=0;
   textFont(nam);
+  
+  // Place the labels in accordance with the instructions.
   for(int l=0;l<tl;l+=3){
     if(labelTags){RST=125;pls=5;}else{RST=75;pls=15;}
     taghold=labels[l+1].split(",");colHold=labels[l+2].split(";");
@@ -168,7 +183,6 @@ void setup(){
         if(k<tk-1){
           println(div[0][k]+", "+textWidth(div[0][k]));
           if(div[1][k].equals(" ")){yCurrent-=textWidth(div[0][k])+96;}
-          //if(div[1][k].equals(" ")){y-=96;}
           if(div[1][k].equals("\t")){yCurrent-=textWidth("  ");}
           if(div[1][k].equals("\n")){xCurrent+=textAscent()+textDescent();yCurrent=y;}
         }
@@ -183,6 +197,8 @@ void setup(){
     }
   }
   textFont(tag);stroke(0);textAlign(LEFT,CENTER);
+  
+  // Generate coordinates for the ends of the bezier curves in advance. 
   if(labelTags){
     for(int i=0;i<ti;i++){
       fill(155,155,155);
@@ -220,18 +236,20 @@ void setup(){
     }
   }
   println("coordinates generated "+millis()/1000+" seconds");
+  
+  // Reorder the relationships.
   reorg.sort("score");
   int[] n1=reorg.getIntColumn("id1");
   int[] n2=reorg.getIntColumn("id2");
   int[] Rtype=reorg.getIntColumn("typeR");
   float[] scores=reorg.getFloatColumn("score");
+  // Plot the bezier curves.
   fill(0,0);
   float x1,x2,x3,y1,y2,y3;
   strokeWeight(2);
   ti=n1.length;
   int c,f;float t,m;
-  
-  
+  // Colors for each arc are derived from the colormaps, using linear interpolation between two colors in cases where the relationship strength value does not result in an exact match.
   if(directOnly){
     for(int i=0;i<ti;i++){
       if(Rtype[i]==0){
@@ -298,6 +316,7 @@ void setup(){
   if(recipOnly){namMod+="_reciprocalOnly";}
   println("plotted,Time elapsed: "+millis()/1000+" seconds");
   println("testout4"+namMod+"_Tags.png");
+  // Save the output file as both a .tif and a .png. 
   if(labelTags){save("outputs/out"+namMod+"_Tags.png");}else{save("outputs/out"+namMod+"_NT.png");}
   if(labelTags){save("outputs/out"+namMod+"_Tags.tif");}else{save("outputs/out"+namMod+"_NT.tif");}
   exit();
@@ -305,78 +324,21 @@ void setup(){
 
 
 
-void draw(){
-}
-boolean shanPassFail(float shan,int cutOff){
-  float[]val={0,0.1914333,0.32275695,0.4305519,0.52255934,0.6024308,0.6722948,0.7335379,0.78712654,0.8337649,0.87398106,0.9081783,0.9366674,0.9596869,0.9774178,0.9899928,0.99750245,1.0};
-  if (shan>=val[cutOff]){
-    return true;
-  }
-  return false;
-}
+void draw(){}
+// This function returns the component of the relationship strength value corresponding to the Hamming distance.
 float scaleHam(int ham,float points){
   return map(ham,0,centerHammingValue,0,points);
 }
+// This function returns the component of the relationship strength value corresponding to the Hamming distance.
 float scaleHam(float ham,float points){
   return map(ham,0,centerHammingValue,0,points);
 }
+// This function returns the component of the relationship strength value corresponding to the Shannon entropy.
 float scaleShan(float shan,float points){
   return map(shan,0,1,0,points);
 }
 
-
-class sections{
-  float cX;
-  float cY;
-  float disX;
-  float disY;
-  int mode=0;
-  int N=0;
-  
-  sections(){}
-  sections(float tcx,float tcy,float tdx,float tdy){
-    cX=tcx;cY=tcy;disX=tdx;disY=tdy;
-  }
-  sections(float tcx,float tcy,float tdx,float tdy,int tPC){
-    cX=tcx;cY=tcy;disX=tdx;disY=tdy;N=tPC;
-  }
-  void update(float tcx,float tcy,float tdx,float tdy){
-    cX=tcx;cY=tcy;disX=tdx;disY=tdy;
-  }
-  void changeMode(int tMode){mode=tMode;}
-  void lable(int staGene,int stoGene,float thick,color f,color s){
-    double q=(1.0/float(N))*TWO_PI;
-    double w=staGene*q-(q*.3);
-    double e=stoGene*q+(q*.3);
-    region(w,e,thick,f,s);
-  }
-  void region(double start,double stop,float thick,color fill,color stroke){    
-    float a=disX+.5*thick;float b=disX-.5*thick;
-    float res;
-    if(mode!=0){
-      if(mode==1){
-        a=disX+thick;b=disX;
-      }
-      if(mode==2){
-        a=disX;b=disX-thick;
-      }
-    }
-    res=5000.0;
-    int sa=round((float)(res*(start/PI)));
-    int so=round((float)(res*(stop/PI)));
-    PShape reg=createShape();
-    reg.beginShape();
-    reg.fill(fill);
-    reg.stroke(stroke);
-    
-    for(int i=sa;i<=so;i++){reg.vertex(a*cos(float(i)*PI/res)-cX,cY+a*sin(float(i)*PI/res));}
-    for(int i=so;i>=sa;i--){reg.vertex(b*cos(float(i)*PI/res)-cX,cY+b*sin(float(i)*PI/res));}
-    
-    reg.endShape(CLOSE);
-    shape(reg);
-  }
-  
-}
+// This function draws the tab component of the labels.
 void ringSeg(float xPos,float yPos,float inW,float inH,float outW,float outH,float startAngle,float stopAngle){
   startAngle-=0.004;stopAngle+=0.004;
   strokeJoin(ROUND);
@@ -402,6 +364,7 @@ void ringSeg(float xPos,float yPos,float inW,float inH,float outW,float outH,flo
   curveVertex(outW*cos(startAngle)+xPos,outH*sin(startAngle)+yPos);
   endShape(CLOSE);
 }
+// This function tells the script if a piece of text in the labels should be italicized. 
 boolean isGeneName(String in){
   if(!doesNotContain(in)){return false;}
   if(in.length()>=3){
@@ -410,6 +373,7 @@ boolean isGeneName(String in){
   }
   return false;
 }
+// This function returns true if the string does not have any of the nonAllowed characters.
 boolean doesNotContain(String test){
   String nonAllowed=" \n\t~!@#$%^&*()_+-=,./<>?;:\'\"\\[]{}|Ω≈ç√∫˜≤≥÷åß∂ƒ©˙∆˚¬…æœ∑´†¥¨ˆπ«¡™£¢∞§¶•ªº–≠¸˛Ç◊ı˜Â¯˘¿ÅÍÎÏ˝ÓÔÒÚÆ`⁄€‹›ﬁﬂ‡°·‚—±Œ„„´‰ˇÁ¨ˆØ∏»";
   int ti=nonAllowed.length();
@@ -418,6 +382,7 @@ boolean doesNotContain(String test){
   }
   return true;
 }
+// This function returns true if the test string inclusively contains any of the characters in the list string.
 boolean containsAny(String test,String list){
   int ti=list.length();
   for(int i=0;i<ti;i++){
@@ -425,6 +390,7 @@ boolean containsAny(String test,String list){
   }
   return false;
 }
+// This function processes label names that have whitespace.
 String[][] breaker(String in){
   String[][] out={{},{}};
   int ti=in.length();String temp="";
