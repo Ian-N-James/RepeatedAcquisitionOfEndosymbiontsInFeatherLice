@@ -1,3 +1,4 @@
+// This function loads the color maps.
 color[][] loadColorsHex(String in){
   color[][] output={};
   String[] input=loadStrings(in);

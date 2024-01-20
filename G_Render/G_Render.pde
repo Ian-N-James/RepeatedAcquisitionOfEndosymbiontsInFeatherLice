@@ -7,20 +7,16 @@
 */
 
 PGraphics tab,ren1,ren2,ren4,tab2;
-
-  int startX=100;     
-  int startY=105;     
-  int startY2=10;     
-  int spacer=5;  
-  int spacer2=5; 
-  int genomeNum=36;
-  int Height=10;   
-  int Height2=13;  
-  float mult=0.4;
+int startX=100;     
+int startY=105;     
+int startY2=10;     
+int spacer=5;  
+int spacer2=5; 
+int genomeNum=36;
+int Height=10;   
+int Height2=13;  
+float mult=0.4;
 void setup(){
-  int conLev=30;     
-  int GenomeNum=genomeNum+(genomeNum-conLev+1);   
-
   int Fontsize=10;   
   int geneNum=4462;  
   PFont GenomeNamesFont = createFont("Arial-ItalicMT", 12),sup=createFont("ArialMT",
@@ -29,16 +25,17 @@ void setup(){
   color intact=color(166,219,160); 
   color pseudo=color(153,112,171);
   color MC=color(100,100,100);
-  color CF=color(255,255,0);// this color should not appear.
+  color CF=color(255,255,0);
+  // Load the color maps.
   color[][] gradients=loadColorsHex("Gradient.txt");
   // gradients[0] is the pseudogene gradient
   // gradients[1] is the intact gene gradient
   color riboRegion=color(53,151,143);
   color phagePlasRegions=color(223,194,125);
   int[][] findCom=new int[geneNum][3];
-  
   Table Anntab,Namelist,RetenTab;
-  //input the genome names
+  
+  //Load the genome names, abbreviations and cutoffs.
   String[] GenomeNames,GenomeAbbs;float[] Cutoffs;
   Namelist=loadTable("../sharedResources/namelist.csv","header");
   GenomeNames=new String[Namelist.getRowCount()];
@@ -53,7 +50,8 @@ void setup(){
   Table[] anntabs=new Table[genomeNum];
   int[] tabLens=new int[genomeNum];
   boolean[] remove=new boolean[geneNum];
-  for(int i=0;i<genomeNum;i++){//input the gene annotations
+  //Load the genome annotations, and remove non protein coding genes.
+  for(int i=0;i<genomeNum;i++){
     anntabs[i]=loadTable("../sharedResources/zFin/zFin-"+GenomeAbbs[i]+"-AnnTabFin.csv","header");
     for(int j=anntabs[i].getRowCount()-1;j>=0;j--){
       if(anntabs[i].getString(j,"flags").equals("pseuHS")||
@@ -69,7 +67,7 @@ void setup(){
       }
     }
   }
-  for(int i=0;i<genomeNum;i++){//input the gene annotations
+  for(int i=0;i<genomeNum;i++){
     for(int j=anntabs[i].getRowCount()-1;j>=0;j--){
       if(remove[j]){anntabs[i].removeRow(j);}
     }
@@ -86,17 +84,16 @@ void setup(){
     geneNum=tabLens[0];  
   }
   int ti=genomeNum, tj=geneNum;
-  println(anntabs[0].getRowCount()+", "+tj);
   int[][] geneStatus=new int[ti][tj];
   float[][] geneWScore=new float[ti][tj];
   for(int i=0;i<ti;i++){
     for(int j=0;j<tj;j++){
-      float statusRead=anntabs[i].getFloat(j,"weightScore");//ann
-      int call= -1;//just a number that isn't used elsewere, for validation
-      if(statusRead==1){call=0;}                          // Missing
-      if(statusRead<1 && statusRead>Cutoffs[i]){call=1;}  // Pseudo
-      if(statusRead>=0 && statusRead<=Cutoffs[i]){call=2;} // Intact
-      if(statusRead==20.0){call=-2;}                      // Gene not looked at.
+      float statusRead=anntabs[i].getFloat(j,"weightScore");
+      int call= -1;
+      if(statusRead==1){call=0;}                        
+      if(statusRead<1 && statusRead>Cutoffs[i]){call=1;}
+      if(statusRead>=0 && statusRead<=Cutoffs[i]){call=2;}
+      if(statusRead==20.0){call=-2;}
       if(call==-1){println("Unidentified call on "+GenomeAbbs[i]+", "+anntabs[i].getString(j,"tag"));}
       if(call==-2){println("Non protien gene / HS pseudogene on "+GenomeAbbs[i]+", "+anntabs[i].getFloat(j,"tag"));}
       geneStatus[i][j]=call;
@@ -119,12 +116,7 @@ void setup(){
   ren4.background(255);
   tab2.background(255);
   
-  //render the nonplasmid genes & genome names
-  //
-  //phage island 1: Sant_2513 - Sant_2554 (155,55,255,55)
-  //phage island 2: Sant_2857 - Sant_2946 (155,55,255,55)
-  //plasmid: Sant_P0001 - Sant_P0364 (155,55,255,55)
-  //ribosomal protiens: sant_0425 (rpsJ) - Sant_0452 (rplQ) (0,55,255,55)
+  // Highlight the regions corresponding to the two prophage islands, the plasmid, and the largest ribosomal protein operon.
   String[] regionStartTags={"Sant_2513","Sant_2857","Sant_P0001","Sant_0425"};
   String[] regionStopTags={"Sant_2554","Sant_2946","Sant_P0364","Sant_0452"};
   color[]  regionColors={phagePlasRegions,phagePlasRegions,phagePlasRegions,riboRegion}; 
@@ -133,10 +125,9 @@ void setup(){
   for(int k=0;k<tk;k++){
     int star=anntabs[0].findRowIndex(regionStartTags[k],"tag");
     int stop=anntabs[0].findRowIndex(regionStopTags[k],"tag");
-    println(star+", "+stop+", "+regionNames[k]);
     specialRegion(star,stop,regionColors[k],regionNames[k],LabelsFont,LabelsFont2);
   }
-
+  // Write the query organism names, and render the gene statuses for each query organism.
   tab.fill(0);tab2.fill(0);tab2.textFont(GenomeNamesFont2);
   int StartY=startY;int StartY2=startY2;
   PGraphics ren1p,ren1i,ren1e;
@@ -242,6 +233,8 @@ void setup(){
   ren1.image(ren1p,0,0);
   ren1.image(ren1i,0,0);
   ren1.image(ren1e,0,0);
+  
+  // Render the summary information.
   startY=startY+Height+spacer;
   startY2=startY2+Height2+spacer2;
   ren2.noStroke();
@@ -273,11 +266,13 @@ void setup(){
   ren4.endDraw();
   tab.endDraw();
   tab2.endDraw();
+  // Save the output file that uses sub-pixel rendering.
   PGraphics file1=createGraphics(tab.width+ren1.width,tab.height);
   file1.beginDraw();
   file1.image(tab,0,0);file1.image(ren1,tab.width,0);
   file1.endDraw();
   file1.save("GRender.tif");
+  // Save the output file that renders at one pixel per gene.
   PGraphics file2=createGraphics(tab.width+ren2.width,tab.height);
   file2.beginDraw();
   file2.image(tab,0,0);
@@ -285,12 +280,14 @@ void setup(){
   file2.endDraw();
   file2.save("GRender_1px.tif");
   PGraphics file3=createGraphics(tab2.width+ren2.width,tab.height);
-  ren4.save("GVeiwer/geneRender.tif");
-  tab.save("GVeiwer/tab.tif");
+  // Save two specialized output files for use by GVeiwer.
+  ren4.save("GViewer/geneRender.tif");
+  tab.save("GViewer/tab.tif");
   exit();
 }
 void draw(){}
 
+// Draw the special regions.
 void specialRegion(int start,int stop,color col,String name,PFont fon,PFont fon2){
   int rHeight=(genomeNum+3)*Height+(genomeNum+7)*spacer,tHeight=rHeight+startY;
   int rHeight2=(genomeNum+3)*Height2+(genomeNum+7)*spacer2,tHeight2=rHeight2+startY2;
