@@ -61,7 +61,7 @@ void setup(){
   /* Exclude genes with a Shannon entropy less than 0.43, corresponding to 
      the exclusion of genes having less than three cases of retention or  
      loss. This value was selected for this system on the basis that genes 
-     with two or fewer were over represented in the data set of this system. 
+     with two or fewer were over represented in the data set. 
   */   
   int numAbove=0;
   float sCut=0.43;
@@ -237,7 +237,7 @@ void setup(){
   }
   println("coordinates generated "+millis()/1000+" seconds");
   
-  // Reorder the relationships.
+  // Reorder the relationships based on relationship strength.
   reorg.sort("score");
   int[] n1=reorg.getIntColumn("id1");
   int[] n2=reorg.getIntColumn("id2");
@@ -364,7 +364,7 @@ void ringSeg(float xPos,float yPos,float inW,float inH,float outW,float outH,flo
   curveVertex(outW*cos(startAngle)+xPos,outH*sin(startAngle)+yPos);
   endShape(CLOSE);
 }
-// This function tells the script if a piece of text in the labels should be italicized. 
+// This function determines if text in the labels is italicized.
 boolean isGeneName(String in){
   if(!doesNotContain(in)){return false;}
   if(in.length()>=3){
