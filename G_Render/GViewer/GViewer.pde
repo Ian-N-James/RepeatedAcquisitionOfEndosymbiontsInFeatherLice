@@ -22,9 +22,9 @@ void settings(){
   Genie=loadImage("geneRender.tif","tif");
   tab=loadImage("tab.tif","tif");
   tabWidth=tab.width;
-  // Load the table of gene annotations
+  // Load the table of gene annotations.
   Ann=loadTable("Tags.csv","header");
-  // Adjust the window size if the display is not large enough.
+  // Adjust the window size in accordance with the display resolution.
   if (Genie.height<displayHeight){size(8*displayWidth/9,Genie.height);}else{size(8*displayWidth/9,5*displayHeight/6);}
   
 }
@@ -42,7 +42,7 @@ void draw(){
   }
   
   textFont(font1);
-  // Keep track of what gene the mouse is over. 
+  // Monitor which gene the mouse cursor is over.
   if(mouseX>tabWidth&&((((-botX)+mouseX-tabWidth)/4))<=4461){
   Genie3=tabWidth+((mouseX-tabWidth));
   int mod=2;
@@ -95,21 +95,21 @@ void draw(){
   
   // Writes the locus tag of the gene last clicked on to the screen.
   text(DummyText1,10,19);
-  // Writes the locus tag of the gene that the mouse is over to the screen.
+  // Writes the locus tag of the gene that the mouse cursor is over to the screen.
   text(DummyText2,505+230,19);
   if(!(name1.equals("-")||name1.equals("[No Gene Selected]"))){textFont(font2);}
   // Writes the name of the gene last clicked on to the screen.
   text(name1,10,39);
   if(!(name2.equals("-")||name2.equals("[No Gene Selected]"))){textFont(font2);}
-  // Writes the name of the gene that the mouse is over to the screen.
+  // Writes the name of the gene that the mouse cursor is over to the screen.
   text(name2,505+230,39);
   textFont(font1);
   // Writes the product information of the gene last clicked on to the screen.
   text(Func1,10,59);
-  // Writes the product information of the gene that the mouse is over to the screen.
+  // Writes the product information of the gene that the mouse cursor is over to the screen.
   text(Func2,500,59);
   
-  // Draw a pair of orange lines (ending below the image) in acordance with mouse position.
+  // Draw a pair of orange lines (ending below the image) in acordance with mouse cursor position.
   stroke(255,155,0);
   line(Genie3-1+3,104,Genie3-1+3,716);
   line(3+Genie3+3,104,3+Genie3+3,716);
