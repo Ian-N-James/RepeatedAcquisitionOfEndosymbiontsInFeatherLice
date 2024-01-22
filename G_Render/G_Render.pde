@@ -127,7 +127,7 @@ void setup(){
     int stop=anntabs[0].findRowIndex(regionStopTags[k],"tag");
     specialRegion(star,stop,regionColors[k],regionNames[k],LabelsFont,LabelsFont2);
   }
-  // Write the query organism names, and render the gene statuses for each query organism.
+  // Write the query organism names, and plot objects representing genes using colors corresponding to the functional status of the gene.
   tab.fill(0);tab2.fill(0);tab2.textFont(GenomeNamesFont2);
   int StartY=startY;int StartY2=startY2;
   PGraphics ren1p,ren1i,ren1e;
@@ -287,7 +287,7 @@ void setup(){
 }
 void draw(){}
 
-// Draw the special regions.
+// Render graphical elements representing highlighted regions.
 void specialRegion(int start,int stop,color col,String name,PFont fon,PFont fon2){
   int rHeight=(genomeNum+3)*Height+(genomeNum+7)*spacer,tHeight=rHeight+startY;
   int rHeight2=(genomeNum+3)*Height2+(genomeNum+7)*spacer2,tHeight2=rHeight2+startY2;
